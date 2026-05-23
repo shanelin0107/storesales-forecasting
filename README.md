@@ -10,6 +10,8 @@ Kaggle competition: [Store Sales - Time Series Forecasting](https://www.kaggle.c
 
 ## Results
 
+![Score Progression](images/01_score_progression.png)
+
 | Version | Architecture | Key Change | LB Score |
 |---------|-------------|------------|----------|
 | v3 | Global LightGBM | Baseline with full feature engineering | 0.430 |
@@ -19,6 +21,14 @@ Kaggle competition: [Store Sales - Time Series Forecasting](https://www.kaggle.c
 | **v15** | Per-Family + Recursive + Zero-Sales | Post-processing for discontinued series | **0.38465** |
 
 Total improvement over baseline: **~11%**
+
+---
+
+## Data Overview
+
+![Sales Trend](images/06_sales_trend.png)
+
+The dataset spans Feb 2013 to Aug 2017. The April 2016 earthquake caused a visible disruption to purchasing patterns, handled via an explicit dummy variable. Overall sales show a gradual upward trend with strong weekly and annual seasonality.
 
 ---
 
@@ -38,7 +48,9 @@ Total improvement over baseline: **~11%**
 
 Replaced a single global model with **33 independent LightGBM models**, one per product family.
 
-**Why it works:** BEVERAGES, PRODUCE, and CLEANING products have fundamentally different demand curves — different seasonality, holiday sensitivity, and price elasticity. A global model forces one tree structure to approximate all of them; per-family models let each learn its own patterns.
+![Sales by Family](images/04_sales_by_family.png)
+
+**Why it works:** The box plots above reveal that PRODUCE, BEVERAGES, and MEATS have fundamentally different sales distributions — different scale, variance, and skew. A global model forces one tree structure to approximate all of them simultaneously; per-family models let each learn its own patterns.
 
 **Dense consecutive lags (lag_16~63):** Instead of sparse handcrafted lag points (lag_16, lag_21, lag_28...), providing all 48 consecutive lags lets the model implicitly learn any moving average pattern — trends, momentum, mean reversion — without manual feature engineering.
 
@@ -53,41 +65,58 @@ Predict Aug 18 using Aug 17 prediction as lag_1, Aug 16 as lag_2
 ...
 ```
 
-This unlocks **lag_7** (weekly cycle), the strongest short-term predictor, for Aug 16–22 (from real data) and Aug 23–31 (from previous predictions).
+This unlocks **lag_7** (weekly cycle), the strongest short-term predictor. The ACF plot below shows why:
 
-**Trade-off:** Prediction errors accumulate over the horizon. Days 14–16 of the forecast carry more noise than days 1–3. In production, this means confidence intervals widen significantly toward the end of the horizon.
+![Autocorrelation](images/03_autocorrelation.png)
+
+The autocorrelation spikes sharply at lag 7, 14, 21, 28 — consumer shopping behavior follows a strong weekly rhythm. Making lag_7 available as a feature (via recursive prediction) was the single largest improvement, dropping LB from 0.41781 to 0.397.
+
+**Trade-off:** Prediction errors accumulate over the horizon. Days 14–16 carry more noise than days 1–3. In production, confidence intervals widen significantly toward the end of the forecast window.
 
 ### 4. Zero-Sales Post-Processing (`18_zero_sales_postprocess.py`, `19_zero_window_search.py`)
 
-If a store–family combination had **zero sales for the past 7 days**, force predictions to 0.
+If a store–family combination had **zero sales for the past 3–7 days**, force predictions to 0.
 
-Models always output small positive numbers for these series (influenced by other stores or historical data), but the correct forecast is 0. This corrects a systematic positive bias for discontinued or out-of-stock SKUs.
+![Zero-Sales Heatmap](images/05_zero_sales_heatmap.png)
 
-Tested windows from 1 to 35 days; **w=3–7 days** performed best.
+The heatmap reveals that certain families (BOOKS, BABY CARE, MAGAZINES) have high zero-sale rates in many stores — these are low-velocity SKUs that are either intermittent or regionally stocked. Models always output small positive numbers for these series, but the correct forecast is 0. Zeroing them out corrects a systematic positive bias.
+
+Tested windows from 1 to 35 days; **w=3–7 days** performed best (LB 0.38465).
 
 ---
 
 ## Key Findings & Real-World Insights
 
 ### 1. Weekly cycles dominate short-term demand
-`lag_7` was consistently the most important feature — more than any calendar variable. Consumer shopping behavior is predominantly weekly. **In production: ensure your pipeline delivers T-1 day sales data with <24h latency** so short-lag features are always available.
+
+![Weekly Seasonality](images/02_weekly_seasonality.png)
+
+Sales are consistently highest on **weekends and Fridays**, lowest on Tuesdays. This weekly rhythm is the dominant short-term signal — stronger than any calendar or promotion feature. `lag_7` was the top feature in every per-family model.
+
+**In production: ensure your data pipeline delivers T-1 day sales with <24h latency** so short-lag features are always available for daily retraining.
 
 ### 2. Product category matters more than store location
+
 Splitting by family (product category) gave larger gains than any store-level segmentation. Demand patterns are shaped more by *what* is being sold than *where* it is sold. **Recommendation: build category-level forecasting pipelines rather than one-size-fits-all models.**
 
 ### 3. Zero-sales detection is an inventory signal, not just a modeling fix
+
 The 127 store–family combinations with 7+ consecutive zero-sale days represent either discontinued SKUs, stockouts, or seasonal gaps. **Recommendation: automatically flag these for store manager review.** If stockout — trigger replenishment. If discontinued — cancel pending purchase orders.
 
 ### 4. Year-ago signals are useful but fragile
+
 lag_364/371 (same period last year) captures annual seasonality. However, restricting the training window to 2015+ (to emphasize recent data) *hurt* performance — reducing sample size outweighed the freshness benefit. **Recommendation: use full historical data with year-ago lag features rather than truncating the training window.**
 
 ### 5. Macroeconomic context belongs in retail models
+
 Oil price was a consistently non-trivial feature. Ecuador's government revenue is oil-dependent, affecting public employee wages (a large consumer segment) with a 1–3 month lag. **For international deployment: identify the local macro indicator most correlated with consumer spending** (e.g., fuel price, unemployment rate, consumer confidence index) and include it as a feature.
 
 ### 6. Holiday effects require geographic precision
+
 National holidays lift all stores uniformly. Regional and local holidays affect only stores in the corresponding state/city. Mismatching holiday features to store location introduces noise and can cause the model to *discount* real holiday effects. **Recommendation: maintain a store–geography mapping and apply holiday features at the correct granularity.**
 
 ### 7. Structural breaks need explicit handling
+
 The April 2016 earthquake caused a ~3-week disruption to normal purchasing patterns. Without an explicit dummy variable, the model treats this as seasonal noise and may learn incorrect lag patterns from that period. **Recommendation: maintain a "disruption calendar" for known structural breaks** (natural disasters, strikes, pandemic periods, supply chain crises) and add indicator variables.
 
 ---
@@ -117,12 +146,11 @@ The April 2016 earthquake caused a ~3-week disruption to normal purchasing patte
 ├── 17_recursive_forecast.py       # + Recursive forecasting lag_1~63 (v14, LB 0.397)
 ├── 18_zero_sales_postprocess.py   # Zero-sales post-processing (v15, LB 0.38465)
 ├── 19_zero_window_search.py       # Search optimal zero-sales window
+├── 20_visualizations.py           # Generate all charts in images/
+├── images/                        # Charts for README
 ├── stores.csv                     # Store metadata (type, cluster, city, state)
 ├── oil.csv                        # Daily oil prices
-├── holidays_events.csv            # Holiday calendar with locale
-└── outputs/
-    ├── train_fe.parquet           # Engineered training features
-    └── test_fe.parquet            # Engineered test features
+└── holidays_events.csv            # Holiday calendar with locale
 ```
 
 ## How to Reproduce
@@ -140,6 +168,9 @@ python3 17_recursive_forecast.py
 # 4. Apply zero-sales post-processing
 python3 18_zero_sales_postprocess.py
 # → submission_v15.csv  (LB 0.38465)
+
+# 5. (Optional) Regenerate visualizations
+python3 20_visualizations.py
 ```
 
 ## Dependencies
