@@ -1,0 +1,26 @@
+# Large Kaggle data files
+train.csv
+test.csv
+transactions.csv
+
+# Generated outputs
+outputs/*.parquet
+outputs/eda/
+
+# Submission files
+submission*.csv
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# nohup
+nohup.out
