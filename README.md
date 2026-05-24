@@ -1,4 +1,4 @@
-# Store Sales Forecasting — Corporación Favorita
+# Store Sales Forecasting
 
 Kaggle competition: [Store Sales - Time Series Forecasting](https://www.kaggle.com/competitions/store-sales-time-series-forecasting)
 
