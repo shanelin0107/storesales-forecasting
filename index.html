@@ -1,731 +1,909 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Store Sales Forecasting | Time Series Kaggle Competition</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    /* ── Design tokens ── */
-    :root {
-      --green-900: #1b4332;
-      --green-800: #2d6a4f;
-      --green-700: #40916c;
-      --green-500: #52b788;
-      --green-300: #95d5b2;
-      --green-100: #d8f3dc;
-      --green-50:  #f0fdf4;
-      --amber:     #f4a261;
-      --amber-dk:  #e76f51;
-      --n900: #111827;
-      --n800: #1f2937;
-      --n700: #374151;
-      --n600: #4b5563;
-      --n400: #9ca3af;
-      --n200: #e5e7eb;
-      --n100: #f3f4f6;
-      --white: #ffffff;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Store Sales Forecasting — shanelin0107</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: #0a0907; color: #f0ede8; font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+  ::selection { background: rgba(255,107,53,0.28); }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #111009; }
+  ::-webkit-scrollbar-thumb { background: #ff6b35; border-radius: 3px; }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  #main-nav a { transition: color 0.2s; }
+  #main-nav a:hover { color: #f0ede8; }
+  .nav-gh:hover { background: rgba(255,107,53,0.1) !important; }
 
-    html { scroll-behavior: smooth; }
+  .btn-primary:hover  { background: #ff8555 !important; }
+  .btn-secondary:hover { border-color: rgba(240,237,232,0.45) !important; }
+  .btn-ghost:hover    { color: #f0ede8 !important; border-color: rgba(106,101,96,0.45) !important; }
 
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--n100);
-      color: var(--n800);
-      line-height: 1.65;
-    }
+  .rc-orange:hover { border-color: rgba(255,107,53,0.3)  !important; }
+  .rc-gold:hover   { border-color: rgba(247,201,72,0.3)   !important; }
+  .rc-green:hover  { border-color: rgba(61,181,106,0.3)   !important; }
 
-    /* ── Sticky nav ── */
-    nav {
-      background: var(--green-900);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-    }
-    .nav-inner {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      overflow-x: auto;
-      scrollbar-width: none;
-      gap: 4px;
-    }
-    .nav-inner::-webkit-scrollbar { display: none; }
-    nav a {
-      color: rgba(255,255,255,0.6);
-      text-decoration: none;
-      font-size: 0.83rem;
-      font-weight: 500;
-      padding: 15px 12px;
-      white-space: nowrap;
-      border-bottom: 2px solid transparent;
-      transition: color .15s, border-color .15s;
-    }
-    nav a:hover { color: #fff; border-bottom-color: var(--green-300); }
+  .copy-btn:hover  { color: #f0ede8 !important; border-color: rgba(255,255,255,0.2) !important; }
+  .ft-link:hover   { color: #6a6560 !important; }
 
-    /* ── Hero ── */
-    .hero {
-      background: linear-gradient(140deg, var(--green-900) 0%, var(--green-800) 55%, var(--green-700) 100%);
-      color: #fff;
-      padding: 90px 20px 70px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    /* Shelf grid overlay — store-sales theme */
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image:
-        repeating-linear-gradient(0deg,   transparent, transparent 59px, rgba(255,255,255,0.04) 59px, rgba(255,255,255,0.04) 60px),
-        repeating-linear-gradient(90deg,  transparent, transparent 99px, rgba(255,255,255,0.025) 99px, rgba(255,255,255,0.025) 100px);
-      pointer-events: none;
-    }
-    /* Radial glow */
-    .hero::after {
-      content: '';
-      position: absolute;
-      width: 700px; height: 700px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
-      top: -250px; right: -200px;
-      pointer-events: none;
-    }
-    .hero-inner { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; }
+  .rtab { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 7px 18px; border: none; cursor: pointer; border-radius: 1px; font-weight: 600; letter-spacing: 0.06em; transition: all 0.15s; }
+  .rtab.on  { background: #ff6b35; color: #0a0907; }
+  .rtab.off { background: transparent; color: #5a5550; }
+  .rtab.off:hover { color: #9a9490; }
 
-    .badge {
-      display: inline-block;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.22);
-      border-radius: 20px;
-      padding: 4px 14px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      margin-bottom: 22px;
-    }
-
-    .hero h1 {
-      font-size: clamp(2.2rem, 5.5vw, 3.8rem);
-      font-weight: 700;
-      line-height: 1.1;
-      letter-spacing: -.025em;
-      margin-bottom: 18px;
-    }
-    .hero h1 span { color: var(--green-300); }
-
-    .hero-sub {
-      font-size: 1.05rem;
-      color: rgba(255,255,255,0.75);
-      max-width: 600px;
-      margin: 0 auto 36px;
-    }
-
-    .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px; }
-
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 11px 24px;
-      border-radius: 8px;
-      font-weight: 600; font-size: 0.88rem;
-      text-decoration: none;
-      transition: all .18s;
-    }
-    .btn-amber  { background: var(--amber); color: #fff; }
-    .btn-amber:hover { background: var(--amber-dk); transform: translateY(-1px); }
-    .btn-ghost  { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.35); }
-    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
-
-    /* KPI cards */
-    .kpi-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-    .kpi {
-      background: rgba(255,255,255,0.09);
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 14px;
-      padding: 22px 32px;
-      text-align: center;
-      min-width: 130px;
-    }
-    .kpi-val  { font-size: 2rem; font-weight: 700; color: var(--green-300); }
-    .kpi-lbl  { font-size: 0.72rem; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: .09em; margin-top: 4px; }
-
-    /* ── Shared layout ── */
-    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
-
-    section { padding: 72px 0; }
-    .alt-bg  { background: var(--white); }
-
-    .sec-label {
-      font-size: 0.72rem; font-weight: 700;
-      letter-spacing: .12em; text-transform: uppercase;
-      color: var(--green-700); margin-bottom: 8px;
-    }
-    h2 {
-      font-size: clamp(1.6rem, 3vw, 2.1rem);
-      font-weight: 700; color: var(--n900);
-      letter-spacing: -.015em; margin-bottom: 16px;
-    }
-    h3 { font-size: 1.1rem; font-weight: 600; color: var(--n800); margin-bottom: 10px; }
-    p  { color: var(--n700); margin-bottom: 16px; }
-    p:last-child { margin-bottom: 0; }
-
-    /* ── Score table ── */
-    .score-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 28px 0; }
-    .score-table thead th {
-      background: var(--green-900); color: #fff;
-      padding: 13px 16px; text-align: left;
-      font-size: 0.75rem; font-weight: 600;
-      letter-spacing: .06em; text-transform: uppercase;
-    }
-    .score-table td { padding: 12px 16px; border-bottom: 1px solid var(--n200); }
-    .score-table tr:hover td { background: var(--green-50); }
-    .score-table tr.best td { background: var(--green-50); font-weight: 600; }
-    .pill {
-      display: inline-block; padding: 2px 10px;
-      border-radius: 12px; font-size: 0.85rem; font-weight: 600;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .pill-best   { background: var(--green-100); color: var(--green-800); }
-    .pill-normal { color: var(--n500, #6b7280); }
-
-    /* ── Charts ── */
-    .chart-wrap {
-      margin: 28px 0;
-      border-radius: 12px; overflow: hidden;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-      border: 1px solid var(--n200);
-    }
-    .chart-wrap img { width: 100%; height: auto; display: block; }
-    .chart-cap {
-      background: var(--n100);
-      padding: 11px 16px;
-      font-size: 0.78rem; color: var(--n600);
-      border-top: 1px solid var(--n200);
-    }
-
-    /* ── Cards ── */
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 18px; margin: 24px 0; }
-    .card {
-      background: var(--white); border: 1px solid var(--n200);
-      border-radius: 12px; padding: 22px 22px 22px 18px;
-      border-left: 4px solid var(--green-500);
-    }
-    .card-tag { font-size: 0.72rem; font-weight: 700; color: var(--green-700); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
-    .card h3 { margin-bottom: 8px; }
-    .card p { font-size: 0.9rem; margin-bottom: 0; }
-
-    /* ── Diagram ── */
-    .diagram {
-      background: var(--n900);
-      border-radius: 10px; padding: 22px 24px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.83rem; line-height: 1.9;
-      color: #e2e8f0; margin: 16px 0;
-    }
-    .diagram .day   { color: #93c5fd; }
-    .diagram .arr   { color: var(--green-300); }
-    .diagram .lag   { color: #fbbf24; }
-
-    /* ── Improvement banner ── */
-    .imp-banner {
-      background: linear-gradient(135deg, var(--green-900), var(--green-700));
-      color: #fff; border-radius: 14px;
-      padding: 28px 32px;
-      display: flex; align-items: center; gap: 24px;
-      margin: 32px 0; flex-wrap: wrap;
-    }
-    .imp-stat { font-size: 2.6rem; font-weight: 700; color: var(--green-300); white-space: nowrap; }
-    .imp-body strong { font-size: 1.05rem; }
-    .imp-body p { color: rgba(255,255,255,0.72); margin-top: 4px; font-size: 0.9rem; }
-
-    /* ── Findings list ── */
-    .findings { list-style: none; }
-    .finding  { display: flex; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--n200); }
-    .finding:last-child { border-bottom: none; }
-    .finding-num {
-      flex-shrink: 0; width: 32px; height: 32px;
-      background: var(--green-800); color: #fff;
-      border-radius: 8px; display: flex;
-      align-items: center; justify-content: center;
-      font-weight: 700; font-size: 0.85rem; margin-top: 2px;
-    }
-    .finding-body h3 { margin-bottom: 6px; }
-    .finding-body p  { font-size: 0.93rem; }
-    .insight-box {
-      background: var(--green-50);
-      border-left: 3px solid var(--green-500);
-      padding: 10px 14px; border-radius: 0 8px 8px 0;
-      margin-top: 10px; font-size: 0.88rem;
-      color: var(--green-800);
-    }
-
-    /* ── Deploy table ── */
-    .dep-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 24px 0; }
-    .dep-table td { padding: 14px 16px; border-bottom: 1px solid var(--n200); vertical-align: top; }
-    .dep-table td:first-child { font-weight: 600; color: var(--green-800); width: 32%; white-space: nowrap; }
-    .dep-table tr:hover td { background: var(--green-50); }
-
-    /* ── Code ── */
-    pre {
-      background: var(--n900); color: #e2e8f0;
-      padding: 22px 24px; border-radius: 10px;
-      overflow-x: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.83rem; line-height: 1.75;
-      margin: 16px 0;
-    }
-    code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.84em;
-      background: var(--n100); padding: 2px 6px;
-      border-radius: 4px; color: var(--green-800);
-    }
-    pre code { background: none; padding: 0; color: inherit; font-size: 1em; }
-
-    /* ── Footer ── */
-    footer {
-      background: var(--green-900);
-      color: rgba(255,255,255,0.55);
-      text-align: center;
-      padding: 36px 20px;
-      font-size: 0.83rem;
-    }
-    footer a { color: var(--green-300); text-decoration: none; }
-    footer p + p { margin-top: 6px; }
-
-    /* ── Responsive ── */
-    @media (max-width: 640px) {
-      .kpi-row { gap: 12px; }
-      .kpi { padding: 16px 20px; }
-      .kpi-val { font-size: 1.6rem; }
-      .imp-banner { flex-direction: column; }
-      .score-table th, .score-table td { padding: 10px 10px; font-size: 0.82rem; }
-      .dep-table td:first-child { white-space: normal; }
-    }
-  </style>
+  @media (max-width: 768px) {
+    .hero-text  { padding: 0 24px !important; }
+    .two-col    { grid-template-columns: 1fr !important; }
+    .four-col   { grid-template-columns: repeat(2,1fr) !important; }
+    .three-col  { grid-template-columns: 1fr !important; }
+    .nav-links  { display: none; }
+    .sec-pad    { padding: 64px 24px !important; }
+    .chart-pad  { margin: 0 24px !important; }
+    .footer-grid { grid-template-columns: 1fr !important; }
+  }
+</style>
 </head>
 <body>
 
-<!-- ── Navigation ── -->
-<nav>
-  <div class="nav-inner">
-    <a href="#results">Results</a>
-    <a href="#data">Data</a>
-    <a href="#methodology">Methodology</a>
-    <a href="#findings">Findings</a>
-    <a href="#deployment">Deployment</a>
-    <a href="#repo">Repo</a>
+<!-- ═══ NAV ═══ -->
+<nav id="main-nav" style="position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;transition:background 0.3s,backdrop-filter 0.3s,border-bottom 0.3s;background:transparent;border-bottom:1px solid transparent;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:#ff6b35;font-weight:600;letter-spacing:-0.01em;">storesales</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff6b35;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.25);padding:2px 8px;border-radius:2px;letter-spacing:0.06em;">v15</span>
+  </div>
+  <div class="nav-links" style="display:flex;gap:28px;align-items:center;">
+    <a href="#abstract" style="font-size:13px;color:#6a6560;text-decoration:none;font-weight:500;">Overview</a>
+    <a href="#dataset"  style="font-size:13px;color:#6a6560;text-decoration:none;font-weight:500;">Dataset</a>
+    <a href="#methodology" style="font-size:13px;color:#6a6560;text-decoration:none;font-weight:500;">Method</a>
+    <a href="#demo"     style="font-size:13px;color:#6a6560;text-decoration:none;font-weight:500;">Demo</a>
+    <a href="#results"  style="font-size:13px;color:#6a6560;text-decoration:none;font-weight:500;">Results</a>
+    <a href="https://github.com/shanelin0107/storesales-forecasting" target="_blank" class="nav-gh" style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#ff6b35;text-decoration:none;border:1px solid rgba(255,107,53,0.35);padding:7px 16px;border-radius:2px;transition:all 0.2s;letter-spacing:0.04em;">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      Code
+    </a>
   </div>
 </nav>
 
-<!-- ── Hero ── -->
-<header class="hero">
-  <div class="hero-inner">
-    <div class="badge">Kaggle &mdash; Time Series Forecasting</div>
-    <h1>Store Sales<br><span>Forecasting</span></h1>
-    <p class="hero-sub">
-      Predicting daily sales for 54 stores &times; 33 product families across Ecuador&rsquo;s
-      largest grocery chain &mdash; 1,782 concurrent time series over a 16-day horizon.
-    </p>
-    <div class="hero-btns">
-      <a href="https://www.kaggle.com/competitions/store-sales-time-series-forecasting"
-         class="btn btn-amber" target="_blank" rel="noopener">View Competition ↗</a>
-      <a href="https://github.com/shanelin0107/storesales-forecasting"
-         class="btn btn-ghost"  target="_blank" rel="noopener">GitHub Repo ↗</a>
+<!-- ═══ HERO ═══ -->
+<section style="position:relative;height:100vh;min-height:680px;overflow:hidden;background:#0a0907;display:flex;flex-direction:column;justify-content:center;">
+  <!-- Dot grid -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.18;" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+    <defs><pattern id="dotgrid" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#ff6b35"/></pattern></defs>
+    <rect width="1440" height="900" fill="url(#dotgrid)"/>
+  </svg>
+  <!-- Top fade -->
+  <div style="position:absolute;top:0;left:0;right:0;height:200px;background:linear-gradient(to bottom,#0a0907,transparent);z-index:1;"></div>
+
+  <!-- Text -->
+  <div class="hero-text" style="position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:0 48px;width:100%;padding-top:40px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;flex-wrap:wrap;">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#ff6b35;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);padding:4px 12px;border-radius:2px;letter-spacing:0.1em;">Kaggle Competition</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5a5550;letter-spacing:0.08em;">TIME SERIES &nbsp;·&nbsp; LIGHTGBM &nbsp;·&nbsp; RETAIL FORECASTING</span>
     </div>
-    <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-val">0.38465</div>
-        <div class="kpi-lbl">Best RMSLE (LB)</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-val">↓ 11%</div>
-        <div class="kpi-lbl">vs. Baseline</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-val">1,782</div>
-        <div class="kpi-lbl">Time Series</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-val">33</div>
-        <div class="kpi-lbl">LightGBM Models</div>
-      </div>
+
+    <h1 style="font-size:clamp(38px,5.5vw,76px);font-weight:600;line-height:1.06;letter-spacing:-0.03em;color:#f0ede8;margin-bottom:24px;max-width:820px;">
+      Store Sales<br>
+      <span style="color:#ff6b35;">Demand Forecasting</span><br>
+      <span style="color:#5a5550;">with LightGBM</span>
+    </h1>
+
+    <p style="font-size:18px;color:#7a7570;max-width:580px;line-height:1.65;margin-bottom:40px;font-weight:300;">
+      Predicting daily sales for 1,782 concurrent time series across Corporación Favorita — Ecuador's largest grocery chain. 16-day forecast horizon, RMSLE metric.
+    </p>
+
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <a href="https://github.com/shanelin0107/storesales-forecasting" target="_blank" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;background:#ff6b35;color:#0a0907;text-decoration:none;font-weight:600;font-size:14px;padding:13px 26px;border-radius:2px;transition:background 0.2s;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+      <a href="https://www.kaggle.com/competitions/store-sales-time-series-forecasting" target="_blank" class="btn-secondary" style="display:inline-flex;align-items:center;gap:8px;background:transparent;color:#f0ede8;text-decoration:none;font-weight:500;font-size:14px;padding:13px 26px;border-radius:2px;border:1px solid rgba(240,237,232,0.18);transition:border-color 0.2s;">
+        Kaggle Competition ↗
+      </a>
+      <a href="#demo" class="btn-ghost" style="display:inline-flex;align-items:center;gap:8px;background:transparent;color:#6a6560;text-decoration:none;font-weight:500;font-size:14px;padding:13px 26px;border-radius:2px;border:1px solid rgba(106,101,96,0.2);transition:all 0.2s;">
+        Try Demo ↓
+      </a>
     </div>
   </div>
-</header>
 
-<!-- ── Results ── -->
-<section id="results">
-  <div class="container">
-    <div class="sec-label">Leaderboard</div>
-    <h2>Model Progression</h2>
-    <p>
-      Starting from a global LightGBM baseline, each architectural iteration delivered measurable
-      improvement. The biggest single gain came from switching to <strong>recursive one-day-ahead
-      forecasting</strong>, which unlocked <code>lag_7</code> — the strongest short-term signal
-      in the autocorrelation structure.
-    </p>
+  <!-- Waveform -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:38%;z-index:2;">
+    <div style="position:absolute;top:0;left:0;right:0;height:70px;background:linear-gradient(to bottom,#0a0907,transparent);z-index:1;"></div>
+    <canvas id="hero-canvas" style="display:block;width:100%;height:100%;"></canvas>
+  </div>
 
-    <table class="score-table">
-      <thead>
-        <tr>
-          <th>Version</th>
-          <th>Architecture</th>
-          <th>Key Change</th>
-          <th>LB Score</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>v3</td>
-          <td>Global LightGBM</td>
-          <td>Baseline with full feature engineering</td>
-          <td><span class="pill pill-normal">0.430</span></td>
-        </tr>
-        <tr>
-          <td>v11</td>
-          <td>Per-Family (33 models)</td>
-          <td>Independent model per product category</td>
-          <td><span class="pill pill-normal">0.42084</span></td>
-        </tr>
-        <tr>
-          <td>v12</td>
-          <td>Per-Family + Dense Lags</td>
-          <td>Consecutive lags lag_16~63</td>
-          <td><span class="pill pill-normal">0.41781</span></td>
-        </tr>
-        <tr>
-          <td>v14</td>
-          <td>Per-Family + Recursive</td>
-          <td>Recursive forecasting with lag_1~63</td>
-          <td><span class="pill pill-normal">0.397</span></td>
-        </tr>
-        <tr class="best">
-          <td>v15 ★</td>
-          <td>Per-Family + Recursive + Zero-Sales</td>
-          <td>Post-processing for discontinued series</td>
-          <td><span class="pill pill-best">0.38465</span></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="chart-wrap">
-      <img src="images/01_score_progression.png" alt="Score Progression Chart">
-      <div class="chart-cap">Fig 1 &mdash; LB score progression across model versions (lower is better).</div>
-    </div>
+  <!-- Scroll cue -->
+  <div style="position:absolute;bottom:28px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3a3530;letter-spacing:0.15em;">SCROLL</span>
+    <div style="width:1px;height:28px;background:linear-gradient(to bottom,#4a4540,transparent);"></div>
   </div>
 </section>
 
-<!-- ── Data Overview ── -->
-<section id="data" class="alt-bg">
-  <div class="container">
-    <div class="sec-label">Dataset</div>
-    <h2>Data Overview</h2>
-    <p>
-      The dataset covers <strong>Corporación Favorita</strong>, Ecuador&rsquo;s largest grocery
-      chain. Training data spans Feb 2013 to Aug 15 2017 (~3 million rows); the forecast target
-      is Aug 16–31 2017 (28,513 rows across 1,782 store&ndash;family pairs).
-    </p>
-
-    <div class="card-grid">
-      <div class="card">
-        <div class="card-tag">Scale</div>
-        <h3>54 Stores &times; 33 Families</h3>
-        <p>1,782 concurrent time series. Stores span 22 cities across Ecuador. Families range from PRODUCE and BEVERAGES to BOOKS and BABY CARE.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">Auxiliary Data</div>
-        <h3>Rich External Context</h3>
-        <p>Oil prices (Ecuador is oil-dependent), national/regional/local holidays, daily transaction counts, promotion calendars, and store metadata.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">Challenge</div>
-        <h3>Structural Break</h3>
-        <p>The April 2016 earthquake caused a ~3-week disruption to purchasing behavior — handled via an explicit dummy variable to prevent contaminating lag features.</p>
+<!-- ═══ ABSTRACT ═══ -->
+<section id="abstract" class="sec-pad" style="background:#0f0d0a;padding:100px 48px;">
+  <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1.5fr;gap:80px;align-items:start;" class="two-col">
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.14em;margin-bottom:28px;">OVERVIEW</div>
+      <p style="font-size:clamp(22px,2.5vw,34px);font-weight:500;line-height:1.3;color:#f0ede8;letter-spacing:-0.02em;">
+        "LB 0.38465 — 11% below baseline, driven by recursive forecasting and zero-sales detection."
+      </p>
+      <div style="margin-top:40px;display:flex;flex-direction:column;gap:0;border:1px solid rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+        <div style="display:flex;">
+          <div style="flex:1;padding:16px 20px;border-right:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#4a4540;letter-spacing:0.1em;margin-bottom:6px;">PLATFORM</div>
+            <div style="font-size:13px;color:#b8b4b0;">Kaggle</div>
+          </div>
+          <div style="flex:1;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#4a4540;letter-spacing:0.1em;margin-bottom:6px;">METRIC</div>
+            <div style="font-size:13px;color:#b8b4b0;">RMSLE ↓</div>
+          </div>
+        </div>
+        <div style="display:flex;">
+          <div style="flex:1;padding:16px 20px;border-right:1px solid rgba(255,255,255,0.06);">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#4a4540;letter-spacing:0.1em;margin-bottom:6px;">BEST SCORE</div>
+            <div style="font-size:13px;color:#b8b4b0;">0.38465 (v15)</div>
+          </div>
+          <div style="flex:1;padding:16px 20px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#4a4540;letter-spacing:0.1em;margin-bottom:6px;">MODEL</div>
+            <div style="font-size:13px;color:#b8b4b0;">LightGBM × 33</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="chart-wrap">
-      <img src="images/06_sales_trend.png" alt="Historical Sales Trend">
-      <div class="chart-cap">
-        Fig 2 &mdash; Total daily sales across all stores (Feb 2013 – Aug 2017).
-        The April 2016 earthquake dip is visible mid-series. The overall trend is gradual growth with strong weekly and annual seasonality.
+    <div>
+      <p style="font-size:17px;color:#9a9490;line-height:1.8;margin-bottom:22px;font-weight:300;">
+        This project addresses the <strong style="color:#f0ede8;font-weight:500;">Kaggle Store Sales - Time Series Forecasting</strong> competition: predict daily sales for every store–product pair in Corporación Favorita's 54-store Ecuadorian grocery chain. The task involves 1,782 concurrent time series and a 16-day forecast horizon (Aug 16–31, 2017).
+      </p>
+      <p style="font-size:17px;color:#9a9490;line-height:1.8;font-weight:300;">
+        The final pipeline combines <strong style="color:#f0ede8;font-weight:500;">33 independent LightGBM models</strong> (one per product family) with recursive one-day-ahead forecasting — each model predicts the next day using its own prior predictions as lag features. A zero-sales post-processing step then zeros out discontinued or stockout series, eliminating systematic positive bias. Total improvement over the global baseline is <strong style="color:#f0ede8;font-weight:500;">11%</strong>.
+      </p>
+      <div style="margin-top:32px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5a5550;border:1px solid rgba(255,255,255,0.07);padding:4px 10px;border-radius:2px;">lightgbm</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5a5550;border:1px solid rgba(255,255,255,0.07);padding:4px 10px;border-radius:2px;">time-series</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5a5550;border:1px solid rgba(255,255,255,0.07);padding:4px 10px;border-radius:2px;">recursive-forecast</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5a5550;border:1px solid rgba(255,255,255,0.07);padding:4px 10px;border-radius:2px;">retail</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5a5550;border:1px solid rgba(255,255,255,0.07);padding:4px 10px;border-radius:2px;">demand-forecasting</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── Methodology ── -->
-<section id="methodology">
-  <div class="container">
-    <div class="sec-label">Approach</div>
-    <h2>Methodology</h2>
+<!-- ═══ METRICS BELT ═══ -->
+<section style="background:#0a0907;padding:0 48px 100px;" class="sec-pad" id="metrics">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="four-col" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.08);border-radius:2px;overflow:hidden;">
 
-    <!-- 1. Feature Engineering -->
-    <h3>1 &mdash; Feature Engineering</h3>
-    <p>
-      40+ features across six categories, computed once and stored as a Parquet feature store
-      (<code>outputs/train_fe.parquet</code>), reused across all model iterations.
-    </p>
-    <div class="card-grid" style="margin-bottom: 36px;">
-      <div class="card">
-        <div class="card-tag">Temporal</div>
-        <h3>Lag &amp; Rolling Features</h3>
-        <p>Sales lags (lag_1–63, lag_364/371/728), 7/14/28-day rolling mean and standard deviation.</p>
+      <div style="background:#0f0d0a;padding:36px 32px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:#ff6b35;"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a5550;letter-spacing:0.12em;margin-bottom:14px;">BEST RMSLE</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:48px;font-weight:600;color:#f0ede8;line-height:1;letter-spacing:-0.02em;margin-bottom:10px;">0.385</div>
+        <div style="font-size:12px;color:#4a4540;display:flex;align-items:center;gap:6px;"><span style="color:#3db56a;">↓ 11%</span> vs. baseline</div>
       </div>
-      <div class="card">
-        <div class="card-tag">Calendar</div>
-        <h3>Date &amp; Holiday Features</h3>
-        <p>Day of week, month, week of year, is_weekend, is_month_start (paycheck effect +12–18%), days_to/after_holiday matched by store geography.</p>
+
+      <div style="background:#0f0d0a;padding:36px 32px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:#f7c948;"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a5550;letter-spacing:0.12em;margin-bottom:14px;">TIME SERIES</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:48px;font-weight:600;color:#f0ede8;line-height:1;letter-spacing:-0.02em;margin-bottom:10px;">1,782</div>
+        <div style="font-size:12px;color:#4a4540;">54 stores × 33 families</div>
       </div>
-      <div class="card">
-        <div class="card-tag">External</div>
-        <h3>Oil &amp; Promotions</h3>
-        <p>Daily oil price + 7/28-day moving average. Forward-looking <code>onpromotion</code> flag (available for test set) plus lagged promotion history.</p>
+
+      <div style="background:#0f0d0a;padding:36px 32px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:#ff6b35;"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a5550;letter-spacing:0.12em;margin-bottom:14px;">MODELS TRAINED</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:48px;font-weight:600;color:#f0ede8;line-height:1;letter-spacing:-0.02em;margin-bottom:10px;">33</div>
+        <div style="font-size:12px;color:#4a4540;">One per product family</div>
       </div>
+
+      <div style="background:#0f0d0a;padding:36px 32px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:#f7c948;"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a5550;letter-spacing:0.12em;margin-bottom:14px;">TRAINING ROWS</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:48px;font-weight:600;color:#f0ede8;line-height:1;letter-spacing:-0.02em;margin-bottom:10px;">3M</div>
+        <div style="font-size:12px;color:#4a4540;">Feb 2013 – Aug 2017</div>
+      </div>
+
     </div>
+  </div>
+</section>
 
-    <!-- 2. Per-Family -->
-    <h3>2 &mdash; Per-Family Architecture</h3>
-    <p>
-      Replaced a single global model with <strong>33 independent LightGBM models</strong> —
-      one per product family. Each model is trained, validated, and predicts entirely within its
-      own product category.
-    </p>
-    <div class="chart-wrap">
-      <img src="images/04_sales_by_family.png" alt="Sales by Product Family">
-      <div class="chart-cap">
-        Fig 3 &mdash; Sales distributions by product family. PRODUCE, BEVERAGES, and MEATS have fundamentally different scales, variance, and skew.
-        A global model cannot serve all simultaneously; per-family models each learn their own patterns.
+<!-- ═══ DATASET ═══ -->
+<section id="dataset" class="sec-pad" style="background:#0f0d0a;padding:100px 48px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.14em;margin-bottom:56px;">DATASET</div>
+
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 1.1fr;gap:80px;align-items:start;">
+      <div>
+        <h2 style="font-size:clamp(28px,3vw,40px);font-weight:600;color:#f0ede8;margin-bottom:20px;letter-spacing:-0.02em;line-height:1.15;">Corporación Favorita — Ecuador</h2>
+        <p style="font-size:16px;color:#7a7570;line-height:1.75;margin-bottom:36px;font-weight:300;">
+          Ecuador's largest grocery chain, operating 54 stores across 22 cities. Training data spans 4.5 years (Feb 2013 – Aug 2017). Auxiliary data includes daily oil prices, national/regional/local holiday calendars, transaction counts, and forward-looking promotion flags.
+        </p>
+        <div class="four-col" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:#141210;border:1px solid rgba(255,255,255,0.05);padding:20px 22px;border-radius:2px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a5550;margin-bottom:8px;">TRAIN ROWS</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;color:#f0ede8;font-weight:500;letter-spacing:-0.02em;">3.0M</div>
+          </div>
+          <div style="background:#141210;border:1px solid rgba(255,255,255,0.05);padding:20px 22px;border-radius:2px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a5550;margin-bottom:8px;">STORES</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;color:#f0ede8;font-weight:500;letter-spacing:-0.02em;">54</div>
+          </div>
+          <div style="background:#141210;border:1px solid rgba(255,255,255,0.05);padding:20px 22px;border-radius:2px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a5550;margin-bottom:8px;">FAMILIES</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;color:#f0ede8;font-weight:500;letter-spacing:-0.02em;">33</div>
+          </div>
+          <div style="background:#141210;border:1px solid rgba(255,255,255,0.05);padding:20px 22px;border-radius:2px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a5550;margin-bottom:8px;">HORIZON</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;color:#f0ede8;font-weight:500;letter-spacing:-0.02em;">16d</div>
+          </div>
+        </div>
       </div>
-    </div>
-    <p>
-      <strong>Dense consecutive lags (lag_16~63):</strong> Providing all 48 consecutive lag days
-      lets each tree model implicitly learn any moving-average pattern — trends, momentum,
-      mean reversion — without manual feature engineering.
-    </p>
 
-    <!-- 3. Recursive Forecasting -->
-    <h3 style="margin-top: 36px;">3 &mdash; Recursive Forecasting</h3>
-    <p>
-      Direct forecasting requires a minimum lag of 16 days, losing <code>lag_7</code>.
-      Recursive forecasting predicts <em>one day at a time</em>, using each prediction
-      as a lag for the next step:
-    </p>
-    <div class="diagram">
-      <span class="day">Aug 16</span> <span class="arr">→ predict →</span> stored in buffer<br>
-      <span class="day">Aug 17</span> <span class="arr">→ predict using</span> <span class="lag">lag_1 = Aug 16 prediction</span><br>
-      <span class="day">Aug 18</span> <span class="arr">→ predict using</span> <span class="lag">lag_1 = Aug 17, lag_2 = Aug 16</span><br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⋮<br>
-      <span class="day">Aug 31</span> <span class="arr">→ predict using</span> <span class="lag">lag_1 … lag_15 all from buffer</span>
-    </div>
-
-    <div class="chart-wrap">
-      <img src="images/03_autocorrelation.png" alt="Autocorrelation Function">
-      <div class="chart-cap">
-        Fig 4 &mdash; Autocorrelation function. Sharp spikes at lag 7, 14, 21, 28 confirm strong weekly consumer behavior cycles.
-        Making lag_7 available via recursive forecasting was the single largest improvement (0.41781 → 0.397).
-      </div>
-    </div>
-
-    <div class="imp-banner">
-      <div class="imp-stat">−5.4%</div>
-      <div class="imp-body">
-        <strong>Recursive forecasting: the single largest jump</strong>
-        <p>Unlocking lag_7 dropped LB from 0.41781 to 0.397 — bigger than any feature engineering change combined.</p>
-      </div>
-    </div>
-
-    <!-- 4. Zero-Sales Post-Processing -->
-    <h3>4 &mdash; Zero-Sales Post-Processing</h3>
-    <p>
-      If a store–family combination had <strong>zero sales for the past 3–7 consecutive days</strong>,
-      force predictions to 0. No retraining required — applied as a final filter on the submission file.
-    </p>
-    <div class="chart-wrap">
-      <img src="images/05_zero_sales_heatmap.png" alt="Zero-Sales Heatmap">
-      <div class="chart-cap">
-        Fig 5 &mdash; Zero-sales rate by store and product family. BOOKS, BABY CARE, and MAGAZINES have high zero-sale rates.
-        Models always output small positive numbers; zeroing them out corrects a systematic positive bias.
+      <!-- Mini chart -->
+      <div style="background:#0c0a08;border:1px solid rgba(255,255,255,0.05);border-radius:2px;padding:24px;overflow:hidden;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4a4540;margin-bottom:16px;letter-spacing:0.08em;">AGGREGATE DAILY SALES — 90-DAY SAMPLE</div>
+        <canvas id="dataset-canvas" style="display:block;width:100%;height:220px;"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:12px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3a3530;">2017-05-17</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3a3530;">2017-08-15</span>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── Key Findings ── -->
-<section id="findings" class="alt-bg">
-  <div class="container">
-    <div class="sec-label">Insights</div>
-    <h2>Key Findings</h2>
+<!-- ═══ METHODOLOGY ═══ -->
+<section id="methodology" class="sec-pad" style="background:#0a0907;padding:100px 48px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.14em;margin-bottom:24px;">METHODOLOGY</div>
+    <h2 style="font-size:clamp(28px,3vw,40px);font-weight:600;color:#f0ede8;margin-bottom:64px;letter-spacing:-0.02em;">Four-stage pipeline</h2>
 
-    <div class="chart-wrap">
-      <img src="images/02_weekly_seasonality.png" alt="Weekly Seasonality">
-      <div class="chart-cap">
-        Fig 6 &mdash; Average sales by day of week. Weekends and Fridays consistently peak; Tuesdays are lowest.
-        This weekly rhythm is the dominant short-term demand signal.
+    <div class="four-col" style="display:grid;grid-template-columns:repeat(4,1fr);gap:40px;position:relative;">
+      <!-- Connector -->
+      <div style="position:absolute;top:19px;left:calc(12.5% + 4px);right:calc(12.5% + 4px);height:1px;background:linear-gradient(to right,#ff6b35,rgba(255,107,53,0.15));pointer-events:none;"></div>
+
+      <div style="position:relative;z-index:1;">
+        <div style="width:38px;height:38px;background:#ff6b35;display:flex;align-items:center;justify-content:center;margin-bottom:24px;border-radius:2px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#0a0907;">01</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a5550;letter-spacing:0.12em;margin-bottom:10px;">FEATURE ENG.</div>
+        <h3 style="font-size:17px;font-weight:600;color:#f0ede8;margin-bottom:12px;line-height:1.3;letter-spacing:-0.01em;">40+ Feature Columns</h3>
+        <p style="font-size:14px;color:#6a6560;line-height:1.65;font-weight:300;">Lag_1–63, lag_364/371, rolling means/stds, calendar, holiday (national/regional/local), oil price, promotions, earthquake dummy.</p>
+      </div>
+
+      <div style="position:relative;z-index:1;">
+        <div style="width:38px;height:38px;background:rgba(255,107,53,0.12);border:1px solid rgba(255,107,53,0.3);display:flex;align-items:center;justify-content:center;margin-bottom:24px;border-radius:2px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#ff6b35;">02</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a5550;letter-spacing:0.12em;margin-bottom:10px;">PER-FAMILY</div>
+        <h3 style="font-size:17px;font-weight:600;color:#f0ede8;margin-bottom:12px;line-height:1.3;letter-spacing:-0.01em;">33 Independent Models</h3>
+        <p style="font-size:14px;color:#6a6560;line-height:1.65;font-weight:300;">One LightGBM per product family. PRODUCE, BEVERAGES, MEATS each have distinct scale and seasonality — separate models outperform one global model.</p>
+      </div>
+
+      <div style="position:relative;z-index:1;">
+        <div style="width:38px;height:38px;background:rgba(255,107,53,0.12);border:1px solid rgba(255,107,53,0.3);display:flex;align-items:center;justify-content:center;margin-bottom:24px;border-radius:2px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#ff6b35;">03</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a5550;letter-spacing:0.12em;margin-bottom:10px;">RECURSIVE</div>
+        <h3 style="font-size:17px;font-weight:600;color:#f0ede8;margin-bottom:12px;line-height:1.3;letter-spacing:-0.01em;">Day-by-Day Forecast</h3>
+        <p style="font-size:14px;color:#6a6560;line-height:1.65;font-weight:300;">Predict Aug 16, feed it as lag_1 to predict Aug 17, and so on. Unlocks lag_7 — the strongest weekly cycle signal. Largest single gain: LB 0.418 → 0.397.</p>
+      </div>
+
+      <div style="position:relative;z-index:1;">
+        <div style="width:38px;height:38px;background:rgba(255,107,53,0.12);border:1px solid rgba(255,107,53,0.3);display:flex;align-items:center;justify-content:center;margin-bottom:24px;border-radius:2px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#ff6b35;">04</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a5550;letter-spacing:0.12em;margin-bottom:10px;">POST-PROCESS</div>
+        <h3 style="font-size:17px;font-weight:600;color:#f0ede8;margin-bottom:12px;line-height:1.3;letter-spacing:-0.01em;">Zero-Sales Filter</h3>
+        <p style="font-size:14px;color:#6a6560;line-height:1.65;font-weight:300;">Store–family pairs with 3+ consecutive zero-sales days are set to 0. Eliminates positive bias from discontinued SKUs and stockout series. LB 0.397 → 0.385.</p>
       </div>
     </div>
-
-    <ul class="findings">
-      <li class="finding">
-        <div class="finding-num">1</div>
-        <div class="finding-body">
-          <h3>Weekly cycles dominate short-term demand</h3>
-          <p>Sales peak on weekends and Fridays, trough on Tuesdays. <code>lag_7</code> was the top-ranked feature in every per-family model.</p>
-          <div class="insight-box">In production: ensure your data pipeline delivers T-1 day sales with &lt;24 h latency so short-lag features are always available for daily retraining.</div>
-        </div>
-      </li>
-      <li class="finding">
-        <div class="finding-num">2</div>
-        <div class="finding-body">
-          <h3>Product category matters more than store location</h3>
-          <p>Splitting by product family gave larger gains than any store-level segmentation. Demand patterns are shaped more by <em>what</em> is sold than <em>where</em>.</p>
-          <div class="insight-box">Build category-level forecasting pipelines rather than one-size-fits-all models.</div>
-        </div>
-      </li>
-      <li class="finding">
-        <div class="finding-num">3</div>
-        <div class="finding-body">
-          <h3>Zero-sales detection is an inventory signal</h3>
-          <p>127 store–family combinations had 7+ consecutive zero-sale days — representing discontinued SKUs, stockouts, or seasonal gaps.</p>
-          <div class="insight-box">Auto-flag these for store manager review: stockout → trigger replenishment; discontinued → cancel pending purchase orders.</div>
-        </div>
-      </li>
-      <li class="finding">
-        <div class="finding-num">4</div>
-        <div class="finding-body">
-          <h3>Year-ago signals are useful but fragile</h3>
-          <p>lag_364/371 captures annual seasonality. Restricting training to 2015+ data (fresher) <em>hurt</em> performance — reducing sample size outweighed the freshness benefit.</p>
-          <div class="insight-box">Use full historical data with year-ago lag features rather than truncating the training window.</div>
-        </div>
-      </li>
-      <li class="finding">
-        <div class="finding-num">5</div>
-        <div class="finding-body">
-          <h3>Macroeconomic context belongs in retail models</h3>
-          <p>Oil price was a consistently non-trivial feature. Ecuador&rsquo;s government revenue is oil-dependent, affecting public-employee wages — a large consumer segment — with a 1–3 month lag.</p>
-          <div class="insight-box">For international deployment: identify the local macro indicator most correlated with consumer spending (fuel price, unemployment rate, consumer confidence index).</div>
-        </div>
-      </li>
-      <li class="finding">
-        <div class="finding-num">6</div>
-        <div class="finding-body">
-          <h3>Holiday effects require geographic precision</h3>
-          <p>National holidays lift all stores uniformly. Regional and local holidays affect only stores in the matching state/city. Mismatching features introduces noise.</p>
-          <div class="insight-box">Maintain a store–geography mapping and apply holiday features at the correct granularity.</div>
-        </div>
-      </li>
-      <li class="finding">
-        <div class="finding-num">7</div>
-        <div class="finding-body">
-          <h3>Structural breaks need explicit handling</h3>
-          <p>The April 2016 earthquake caused a ~3-week disruption to purchasing patterns. Without a dummy variable, the model learns incorrect lag patterns from that period.</p>
-          <div class="insight-box">Maintain a &ldquo;disruption calendar&rdquo; for known structural breaks (natural disasters, strikes, pandemic periods) and add indicator variables.</div>
-        </div>
-      </li>
-    </ul>
   </div>
 </section>
 
-<!-- ── Deployment ── -->
-<section id="deployment">
-  <div class="container">
-    <div class="sec-label">Production</div>
-    <h2>Real-World Deployment Recommendations</h2>
-    <p>Insights from competition modeling that translate directly to production grocery forecasting systems:</p>
+<!-- ═══ PIPELINE DIAGRAM ═══ -->
+<section class="sec-pad" style="background:#0f0d0a;padding:100px 48px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.14em;margin-bottom:24px;">PIPELINE</div>
+    <h2 style="font-size:clamp(28px,3vw,40px);font-weight:600;color:#f0ede8;letter-spacing:-0.02em;margin-bottom:40px;">Data flow overview</h2>
 
-    <table class="dep-table">
-      <tbody>
-        <tr>
-          <td>Data Latency</td>
-          <td>Daily sales data with &lt;24 h lag required to use lag_1~7 features. Late data = degraded short-term accuracy.</td>
-        </tr>
-        <tr>
-          <td>Retraining Cadence</td>
-          <td>Weekly retraining recommended; monthly is the minimum given strong weekly cycles.</td>
-        </tr>
-        <tr>
-          <td>Inventory</td>
-          <td>Auto-flag store–SKU pairs with 7+ consecutive zero-sales days for manager review: stockout vs. discontinued.</td>
-        </tr>
-        <tr>
-          <td>Promotions</td>
-          <td>Forward-looking <code>onpromotion</code> calendar (known in advance) is high-value. Maintain it rigorously as a first-class input.</td>
-        </tr>
-        <tr>
-          <td>Model Granularity</td>
-          <td>Per-category models. Consider per-store-type models if fewer than ~10 stores per type.</td>
-        </tr>
-        <tr>
-          <td>Forecast Horizon</td>
-          <td>Confidence degrades after day 7 in recursive mode. Widen safety stock buffers for day 14+ forecasts.</td>
-        </tr>
-        <tr>
-          <td>Macro Features</td>
-          <td>Include the local macro indicator most correlated with consumer purchasing power (oil, wages, consumer confidence).</td>
-        </tr>
-      </tbody>
-    </table>
+    <div style="border:1px solid rgba(255,107,53,0.15);border-radius:2px;height:320px;position:relative;overflow:hidden;background:#0c0a08;">
+      <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 1100 320" preserveAspectRatio="xMidYMid meet">
+        <!-- Grid lines -->
+        <line x1="0" y1="107" x2="1100" y2="107" stroke="rgba(255,107,53,0.06)" stroke-width="1"/>
+        <line x1="0" y1="214" x2="1100" y2="214" stroke="rgba(255,107,53,0.06)" stroke-width="1"/>
+        <line x1="183" y1="0" x2="183" y2="320" stroke="rgba(255,107,53,0.06)" stroke-width="1"/>
+        <line x1="366" y1="0" x2="366" y2="320" stroke="rgba(255,107,53,0.06)" stroke-width="1"/>
+        <line x1="549" y1="0" x2="549" y2="320" stroke="rgba(255,107,53,0.06)" stroke-width="1"/>
+        <line x1="732" y1="0" x2="732" y2="320" stroke="rgba(255,107,53,0.06)" stroke-width="1"/>
+        <line x1="915" y1="0" x2="915" y2="320" stroke="rgba(255,107,53,0.06)" stroke-width="1"/>
+        <!-- Raw Data block -->
+        <rect x="30" y="110" width="120" height="100" rx="2" fill="rgba(255,107,53,0.07)" stroke="rgba(255,107,53,0.35)" stroke-width="1"/>
+        <text x="90" y="154" font-family="IBM Plex Mono,monospace" font-size="11" fill="#ff6b35" text-anchor="middle">Raw CSVs</text>
+        <text x="90" y="171" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5a5550" text-anchor="middle">train / stores</text>
+        <text x="90" y="184" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5a5550" text-anchor="middle">oil / holidays</text>
+        <!-- Feature Store block -->
+        <rect x="205" y="85" width="135" height="150" rx="2" fill="rgba(255,107,53,0.05)" stroke="rgba(255,107,53,0.25)" stroke-width="1"/>
+        <text x="272" y="147" font-family="IBM Plex Mono,monospace" font-size="11" fill="#ff6b35" text-anchor="middle">Feature</text>
+        <text x="272" y="164" font-family="IBM Plex Mono,monospace" font-size="11" fill="#ff6b35" text-anchor="middle">Engineering</text>
+        <text x="272" y="183" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5a5550" text-anchor="middle">40+ columns</text>
+        <!-- 33 Models block -->
+        <rect x="395" y="70" width="155" height="180" rx="2" fill="rgba(247,201,72,0.06)" stroke="rgba(247,201,72,0.28)" stroke-width="1"/>
+        <text x="472" y="142" font-family="IBM Plex Mono,monospace" font-size="11" fill="#f7c948" text-anchor="middle">33 × LightGBM</text>
+        <text x="472" y="159" font-family="IBM Plex Mono,monospace" font-size="11" fill="#f7c948" text-anchor="middle">Per-Family</text>
+        <text x="472" y="178" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5a5550" text-anchor="middle">log1p(sales) target</text>
+        <!-- Recursive block -->
+        <rect x="608" y="85" width="140" height="150" rx="2" fill="rgba(255,107,53,0.05)" stroke="rgba(255,107,53,0.22)" stroke-width="1"/>
+        <text x="678" y="148" font-family="IBM Plex Mono,monospace" font-size="11" fill="#ff6b35" text-anchor="middle">Recursive</text>
+        <text x="678" y="165" font-family="IBM Plex Mono,monospace" font-size="11" fill="#ff6b35" text-anchor="middle">Forecast</text>
+        <text x="678" y="184" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5a5550" text-anchor="middle">Aug 16 → 31</text>
+        <!-- Zero-Sales block -->
+        <rect x="808" y="100" width="130" height="120" rx="2" fill="rgba(247,201,72,0.05)" stroke="rgba(247,201,72,0.22)" stroke-width="1"/>
+        <text x="873" y="153" font-family="IBM Plex Mono,monospace" font-size="11" fill="#f7c948" text-anchor="middle">Zero-Sales</text>
+        <text x="873" y="170" font-family="IBM Plex Mono,monospace" font-size="11" fill="#f7c948" text-anchor="middle">Filter</text>
+        <text x="873" y="189" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5a5550" text-anchor="middle">w=3 days</text>
+        <!-- Output block -->
+        <rect x="995" y="120" width="80" height="80" rx="2" fill="rgba(61,181,106,0.07)" stroke="rgba(61,181,106,0.35)" stroke-width="1"/>
+        <text x="1035" y="157" font-family="IBM Plex Mono,monospace" font-size="11" fill="#3db56a" text-anchor="middle">LB</text>
+        <text x="1035" y="174" font-family="IBM Plex Mono,monospace" font-size="14" fill="#3db56a" font-weight="600" text-anchor="middle">0.385</text>
+        <!-- Arrows -->
+        <path d="M 150 160 L 205 160" stroke="rgba(255,107,53,0.45)" stroke-width="1.5" fill="none"/>
+        <polygon points="202,156 210,160 202,164" fill="rgba(255,107,53,0.45)"/>
+        <path d="M 340 160 L 395 160" stroke="rgba(255,107,53,0.45)" stroke-width="1.5" fill="none"/>
+        <polygon points="392,156 400,160 392,164" fill="rgba(255,107,53,0.45)"/>
+        <path d="M 550 160 L 608 160" stroke="rgba(247,201,72,0.45)" stroke-width="1.5" fill="none"/>
+        <polygon points="605,156 613,160 605,164" fill="rgba(247,201,72,0.45)"/>
+        <path d="M 748 160 L 808 160" stroke="rgba(255,107,53,0.45)" stroke-width="1.5" fill="none"/>
+        <polygon points="805,156 813,160 805,164" fill="rgba(255,107,53,0.45)"/>
+        <path d="M 938 160 L 995 160" stroke="rgba(61,181,106,0.45)" stroke-width="1.5" fill="none"/>
+        <polygon points="992,156 1000,160 992,164" fill="rgba(61,181,106,0.45)"/>
+      </svg>
+    </div>
   </div>
 </section>
 
-<!-- ── Repository ── -->
-<section id="repo" class="alt-bg">
-  <div class="container">
-    <div class="sec-label">Codebase</div>
-    <h2>Repository Structure</h2>
-    <p>The pipeline is organized as numbered scripts — run them in order to reproduce the final submission.</p>
+<!-- ═══ INTERACTIVE DEMO ═══ -->
+<section id="demo" class="sec-pad" style="background:#0a0907;padding:100px 0;">
+  <div style="max-width:1200px;margin:0 auto;padding:0 48px;margin-bottom:36px;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.14em;margin-bottom:24px;">INTERACTIVE DEMO</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+      <div>
+        <h2 style="font-size:clamp(28px,3vw,40px);font-weight:600;color:#f0ede8;letter-spacing:-0.02em;margin-bottom:8px;">Forecast Explorer</h2>
+        <p style="font-size:13px;color:#4a4540;font-family:'IBM Plex Mono',monospace;">Hover to inspect &mdash; <span style="color:#ff6b35;">orange</span> = historical &nbsp;·&nbsp; <span style="color:#f7c948;">gold</span> = forecast (Aug 16–31)</p>
+      </div>
+      <div style="display:flex;gap:2px;background:#111009;border:1px solid rgba(255,255,255,0.06);padding:3px;border-radius:2px;">
+        <button id="tab-ALL"      onclick="setRange('ALL')"      class="rtab on" >ALL</button>
+        <button id="tab-WEEK"     onclick="setRange('WEEK')"     class="rtab off">30D</button>
+        <button id="tab-FORECAST" onclick="setRange('FORECAST')" class="rtab off">FCST</button>
+      </div>
+    </div>
+  </div>
 
-    <pre><code>├── 01_eda.py                      # Exploratory data analysis (11 plots)
-├── 02_feature_engineering.py      # Feature pipeline → outputs/train_fe.parquet
-├── 08_model_v3.py                 # Global LightGBM baseline (LB 0.430)
-├── 14_per_family.py               # Per-family architecture (LB 0.42084)
-├── 15_per_family_dense_lags.py    # + Dense lags lag_16~63  (LB 0.41781)
-├── 17_recursive_forecast.py       # + Recursive forecasting (LB 0.397)
-├── 18_zero_sales_postprocess.py   # Zero-sales post-processing (LB 0.38465)
-├── 19_zero_window_search.py       # Grid-search optimal zero-sales window
-├── 20_visualizations.py           # Generate all charts
-├── images/                        # 6 publication-quality charts
-├── outputs/                       # Feature stores (Parquet), EDA plots
-└── submission_v15.csv             # Final submission (best score)</code></pre>
-
-    <h3 style="margin-top: 32px;">Reproduce Results</h3>
-    <pre><code># 1. Place Kaggle data files in project root
-#    train.csv  test.csv  transactions.csv  sample_submission.csv
-
-# 2. Build feature store
-python3 02_feature_engineering.py
-
-# 3. Train per-family models and generate predictions
-python3 17_recursive_forecast.py
-
-# 4. Apply zero-sales post-processing
-python3 18_zero_sales_postprocess.py
-# → submission_v15.csv  (LB 0.38465)</code></pre>
-
-    <h3 style="margin-top: 24px;">Dependencies</h3>
-    <pre><code>pandas  numpy  lightgbm  scikit-learn  pyarrow  matplotlib  seaborn</code></pre>
+  <div class="chart-pad" style="position:relative;margin:0 48px;">
+    <canvas id="main-chart" style="display:block;width:100%;height:460px;cursor:crosshair;"></canvas>
+    <div id="chart-tooltip" style="position:absolute;pointer-events:none;opacity:0;background:rgba(12,10,8,0.96);border:1px solid rgba(255,107,53,0.28);padding:12px 16px;border-radius:2px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+      <div id="tt-date" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a5550;margin-bottom:10px;letter-spacing:0.06em;"></div>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <div style="display:flex;justify-content:space-between;gap:20px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#ff6b35;flex-shrink:0;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6a6560;">Actual</span>
+          </div>
+          <span id="tt-actual" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#f0ede8;font-weight:500;"></span>
+        </div>
+        <div id="tt-pred-row" style="display:none;justify-content:space-between;gap:20px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#f7c948;flex-shrink:0;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6a6560;">Forecast</span>
+          </div>
+          <span id="tt-pred" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#f7c948;font-weight:500;"></span>
+        </div>
+        <div id="tt-error-row" style="display:none;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;margin-top:2px;justify-content:space-between;gap:20px;align-items:center;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4a4540;">Error</span>
+          <span id="tt-error" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#ff3366;"></span>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ── Footer ── -->
-<footer>
-  <p>
-    <a href="https://www.kaggle.com/competitions/store-sales-time-series-forecasting"
-       target="_blank" rel="noopener">Kaggle &mdash; Store Sales Time Series Forecasting</a>
-    &nbsp;&middot;&nbsp;
-    <a href="https://github.com/shanelin0107/storesales-forecasting"
-       target="_blank" rel="noopener">GitHub Repository</a>
-  </p>
-  <p style="margin-top:8px; opacity:.4;">Corporación Favorita &nbsp;&middot;&nbsp; Ecuador &nbsp;&middot;&nbsp; 54 Stores &nbsp;&middot;&nbsp; 33 Product Families</p>
+<!-- ═══ RESULTS ═══ -->
+<section id="results" class="sec-pad" style="background:#0f0d0a;padding:100px 48px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.14em;margin-bottom:24px;">RESULTS</div>
+    <h2 style="font-size:clamp(28px,3vw,40px);font-weight:600;color:#f0ede8;margin-bottom:48px;letter-spacing:-0.02em;">Score progression</h2>
+
+    <div style="border:1px solid rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+      <div style="display:grid;grid-template-columns:1.6fr 1.8fr 2fr 1fr;background:rgba(255,255,255,0.025);padding:15px 24px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4a4540;letter-spacing:0.1em;">VERSION</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4a4540;letter-spacing:0.1em;">ARCHITECTURE</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4a4540;letter-spacing:0.1em;">KEY CHANGE</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4a4540;letter-spacing:0.1em;text-align:right;">LB RMSLE ↓</div>
+      </div>
+
+      <!-- v15 — ours -->
+      <div style="display:grid;grid-template-columns:1.6fr 1.8fr 2fr 1fr;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,107,53,0.04);border-left:3px solid #ff6b35;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-weight:600;color:#f0ede8;font-size:15px;">v15</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#ff6b35;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);padding:2px 7px;border-radius:1px;letter-spacing:0.08em;">BEST</span>
+        </div>
+        <div style="color:#b0aca8;font-size:14px;align-self:center;">Per-Family + Recursive + Zero-Sales</div>
+        <div style="color:#6a6560;font-size:13px;align-self:center;">Zero-sales post-processing (w=3)</div>
+        <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:#ff6b35;font-size:15px;align-self:center;">0.38465</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.6fr 1.8fr 2fr 1fr;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <div style="color:#b0aca8;font-size:15px;">v14</div>
+        <div style="color:#6a6560;font-size:14px;font-family:'IBM Plex Mono',monospace;">Per-Family + Recursive</div>
+        <div style="color:#5a5550;font-size:13px;">Recursive 1-day-ahead forecast</div>
+        <div style="text-align:right;font-family:'IBM Plex Mono',monospace;color:#6a6560;font-size:14px;">0.397</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.6fr 1.8fr 2fr 1fr;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <div style="color:#b0aca8;font-size:15px;">v12</div>
+        <div style="color:#6a6560;font-size:14px;font-family:'IBM Plex Mono',monospace;">Per-Family + Dense Lags</div>
+        <div style="color:#5a5550;font-size:13px;">Consecutive lags lag_16~63</div>
+        <div style="text-align:right;font-family:'IBM Plex Mono',monospace;color:#6a6560;font-size:14px;">0.41781</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.6fr 1.8fr 2fr 1fr;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <div style="color:#b0aca8;font-size:15px;">v11</div>
+        <div style="color:#6a6560;font-size:14px;font-family:'IBM Plex Mono',monospace;">Per-Family × 33</div>
+        <div style="color:#5a5550;font-size:13px;">Independent model per product family</div>
+        <div style="text-align:right;font-family:'IBM Plex Mono',monospace;color:#6a6560;font-size:14px;">0.42084</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.6fr 1.8fr 2fr 1fr;padding:18px 24px;">
+        <div style="color:#b0aca8;font-size:15px;">v3</div>
+        <div style="color:#6a6560;font-size:14px;font-family:'IBM Plex Mono',monospace;">Global LightGBM</div>
+        <div style="color:#5a5550;font-size:13px;">Baseline — single global model</div>
+        <div style="text-align:right;font-family:'IBM Plex Mono',monospace;color:#6a6560;font-size:14px;">0.430</div>
+      </div>
+    </div>
+    <p style="margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3a3530;">Kaggle leaderboard · 16-day forecast horizon · lower RMSLE is better</p>
+  </div>
+</section>
+
+<!-- ═══ RESOURCES ═══ -->
+<section class="sec-pad" style="background:#0a0907;padding:100px 48px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.14em;margin-bottom:56px;">RESOURCES</div>
+
+    <div class="three-col" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+      <a href="https://github.com/shanelin0107/storesales-forecasting" target="_blank" class="rc-orange" style="display:block;text-decoration:none;background:#0f0d0a;border:1px solid rgba(255,255,255,0.06);padding:32px;border-radius:2px;transition:border-color 0.2s;">
+        <div style="width:40px;height:40px;background:rgba(255,107,53,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:22px;border-radius:2px;">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="#ff6b35"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        </div>
+        <div style="font-size:17px;font-weight:600;color:#f0ede8;margin-bottom:10px;">GitHub Repository</div>
+        <div style="font-size:14px;color:#6a6560;line-height:1.6;font-weight:300;">Full source code, feature engineering scripts, model training pipeline, and submission files.</div>
+        <div style="margin-top:22px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#ff6b35;">github.com/shanelin0107 →</div>
+      </a>
+
+      <a href="https://www.kaggle.com/competitions/store-sales-time-series-forecasting" target="_blank" class="rc-gold" style="display:block;text-decoration:none;background:#0f0d0a;border:1px solid rgba(255,255,255,0.06);padding:32px;border-radius:2px;transition:border-color 0.2s;">
+        <div style="width:40px;height:40px;background:rgba(247,201,72,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:22px;border-radius:2px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f7c948" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div style="font-size:17px;font-weight:600;color:#f0ede8;margin-bottom:10px;">Kaggle Competition</div>
+        <div style="font-size:14px;color:#6a6560;line-height:1.6;font-weight:300;">Store Sales - Time Series Forecasting. Dataset, leaderboard, and discussion forum hosted on Kaggle.</div>
+        <div style="margin-top:22px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#f7c948;">kaggle.com/competitions →</div>
+      </a>
+
+      <a href="https://www.kaggle.com/competitions/store-sales-time-series-forecasting/data" target="_blank" class="rc-green" style="display:block;text-decoration:none;background:#0f0d0a;border:1px solid rgba(255,255,255,0.06);padding:32px;border-radius:2px;transition:border-color 0.2s;">
+        <div style="width:40px;height:40px;background:rgba(61,181,106,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:22px;border-radius:2px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3db56a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <div style="font-size:17px;font-weight:600;color:#f0ede8;margin-bottom:10px;">Dataset</div>
+        <div style="font-size:14px;color:#6a6560;line-height:1.6;font-weight:300;">Download train.csv, test.csv, oil.csv, holidays_events.csv, stores.csv, and transactions.csv.</div>
+        <div style="margin-top:22px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#3db56a;">kaggle.com · data →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="sec-pad" style="background:#070605;padding:80px 48px;border-top:1px solid rgba(255,255,255,0.04);">
+  <div class="footer-grid" style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr;gap:80px;align-items:start;">
+
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.14em;margin-bottom:24px;">REPRODUCE</div>
+      <div style="background:#0c0a08;border:1px solid rgba(255,255,255,0.06);border-radius:2px;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6a6560;line-height:1.9;overflow-x:auto;">
+        <span style="color:#ff6b35;"># 1. Build feature store</span><br>
+        <span style="color:#f0ede8;">python3</span> 02_feature_engineering.py<br>
+        <br>
+        <span style="color:#ff6b35;"># 2. Train + recursive forecast</span><br>
+        <span style="color:#f0ede8;">python3</span> 17_recursive_forecast.py<br>
+        <br>
+        <span style="color:#ff6b35;"># 3. Zero-sales post-processing</span><br>
+        <span style="color:#f0ede8;">python3</span> 18_zero_sales_postprocess.py<br>
+        <span style="color:#f7c948;"># → submission_v15.csv &nbsp;(LB 0.38465)</span>
+      </div>
+      <button id="copy-btn" class="copy-btn" style="margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4a4540;background:transparent;border:1px solid rgba(255,255,255,0.07);padding:8px 18px;border-radius:2px;cursor:pointer;transition:all 0.2s;letter-spacing:0.06em;">Copy Commands</button>
+    </div>
+
+    <div>
+      <div style="font-size:36px;font-weight:600;color:#f0ede8;margin-bottom:12px;letter-spacing:-0.03em;">storesales</div>
+      <p style="font-size:14px;color:#4a4540;line-height:1.75;margin-bottom:36px;font-weight:300;">
+        Kaggle time-series forecasting on Corporación Favorita grocery chain data. 33 per-family LightGBM models with recursive day-ahead prediction. Best LB: 0.38465.
+      </p>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+        <a href="https://github.com/shanelin0107/storesales-forecasting" class="ft-link" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3a3530;text-decoration:none;transition:color 0.2s;">GitHub</a>
+        <a href="https://www.kaggle.com/competitions/store-sales-time-series-forecasting" class="ft-link" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3a3530;text-decoration:none;transition:color 0.2s;">Kaggle</a>
+        <a href="https://shanelin0107.github.io/storesales-forecasting/" class="ft-link" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3a3530;text-decoration:none;transition:color 0.2s;">This Page</a>
+      </div>
+      <div style="margin-top:48px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.04);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#2a2520;letter-spacing:0.08em;">© 2024 shanelin0107 · Corporación Favorita · 54 Stores · 33 Families</span>
+      </div>
+    </div>
+  </div>
 </footer>
+
+<!-- ═══ JAVASCRIPT ═══ -->
+<script>
+// ── Seeded RNG ──────────────────────────────────────────────────────────
+function seeded(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (Math.imul(1664525, s) + 1013904223) | 0;
+    return (s >>> 0) / 4294967296;
+  };
+}
+
+// ── Nav scroll effect ──────────────────────────────────────────────────
+window.addEventListener('scroll', function() {
+  const nav = document.getElementById('main-nav');
+  if (window.scrollY > 60) {
+    nav.style.background = 'rgba(10,9,7,0.92)';
+    nav.style.backdropFilter = 'blur(16px)';
+    nav.style.borderBottom = '1px solid rgba(255,107,53,0.12)';
+  } else {
+    nav.style.background = 'transparent';
+    nav.style.backdropFilter = 'none';
+    nav.style.borderBottom = '1px solid transparent';
+  }
+});
+
+// ── Synthetic daily sales data ─────────────────────────────────────────
+// Generates 76 days: 60 historical + 16 forecast (Aug 16–31 2017)
+function generateData() {
+  const rand  = seeded(42);
+  const rand2 = seeded(9999);
+  const n = 76;
+  const actual = [], predicted = [], upper = [], lower = [], dates = [];
+  const start = new Date('2017-06-17');
+
+  for (let i = 0; i < n; i++) {
+    const dow    = (start.getDay() + i) % 7; // 0=Sun
+    const weekly = (dow === 0 || dow === 6) ? 18 : (dow === 5) ? 12 : (dow === 2) ? -8 : 0;
+    const dom    = new Date(start.getTime() + i * 86400000).getDate();
+    const payday = (dom <= 3) ? 14 : 0;
+    const trend  = i * 0.4;
+    const noise  = (rand() - 0.5) * 18;
+    actual.push(200 + weekly + payday + trend + noise);
+    dates.push(new Date(start.getTime() + i * 86400000));
+  }
+
+  const splitIdx = 60; // Aug 16 = index 60
+  for (let i = 0; i < n; i++) {
+    if (i < splitIdx) {
+      predicted.push(actual[i]);
+      upper.push(null);
+      lower.push(null);
+    } else {
+      const spread = 4 + (i - splitIdx) * 0.5;
+      const pred = actual[i] + (rand2() - 0.5) * spread * 0.6;
+      predicted.push(pred);
+      upper.push(pred + spread * 1.8);
+      lower.push(pred - spread * 1.8);
+    }
+  }
+  return { actual, predicted, upper, lower, dates, splitIdx };
+}
+
+const chartData = generateData();
+
+// ── Range state ────────────────────────────────────────────────────────
+let viewStart = 0, viewEnd = 76;
+let hoverIdx  = null;
+
+function setRange(mode) {
+  ['ALL','WEEK','FORECAST'].forEach(id => {
+    const btn = document.getElementById('tab-' + id);
+    btn.classList.remove('on'); btn.classList.add('off');
+  });
+  document.getElementById('tab-' + mode).classList.remove('off');
+  document.getElementById('tab-' + mode).classList.add('on');
+
+  if (mode === 'ALL')      { viewStart = 0;  viewEnd = 76; }
+  else if (mode === 'WEEK'){ viewStart = 30; viewEnd = 76; }
+  else                     { viewStart = 48; viewEnd = 76; }
+  hoverIdx = null;
+  document.getElementById('chart-tooltip').style.opacity = 0;
+  drawMainChart();
+}
+
+// ── Hero canvas ────────────────────────────────────────────────────────
+function drawHeroCanvas() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  if (!W || !H) return;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const pts = chartData.actual;
+  const minV = Math.min(...pts), maxV = Math.max(...pts), range = maxV - minV;
+  const toX = i => (i / (pts.length - 1)) * W;
+  const toY = v => H - 8 - ((v - minV) / range) * (H * 0.88);
+
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(255,107,53,0.2)');
+  grad.addColorStop(1, 'rgba(255,107,53,0)');
+  ctx.beginPath();
+  pts.forEach((v, i) => i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)));
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  [
+    { blur: 20, w: 5,   color: 'rgba(255,107,53,0.1)'  },
+    { blur: 7,  w: 2.5, color: 'rgba(255,107,53,0.35)' },
+    { blur: 0,  w: 1.5, color: '#ff6b35'               },
+  ].forEach(({ blur, w, color }) => {
+    ctx.beginPath();
+    ctx.shadowBlur = blur; ctx.shadowColor = '#ff6b35';
+    ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineJoin = 'round';
+    pts.forEach((v, i) => i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)));
+    ctx.stroke();
+  });
+  ctx.shadowBlur = 0;
+}
+
+// ── Dataset mini-chart ─────────────────────────────────────────────────
+function drawDatasetCanvas() {
+  const canvas = document.getElementById('dataset-canvas');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width) return;
+  canvas.width  = rect.width  * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  const pts = chartData.actual; // 76 days, use all
+  const minV = Math.min(...pts), maxV = Math.max(...pts), range = maxV - minV;
+  const P = { l: 8, r: 8, t: 8, b: 8 };
+  const toX = i => P.l + (i / (pts.length - 1)) * (W - P.l - P.r);
+  const toY = v => P.t + (H - P.t - P.b) - ((v - minV) / range) * (H - P.t - P.b);
+
+  ctx.fillStyle = '#0c0a08'; ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const y = P.t + (g / 4) * (H - P.t - P.b);
+    ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke();
+  }
+
+  const grad = ctx.createLinearGradient(0, P.t, 0, H - P.b);
+  grad.addColorStop(0, 'rgba(247,201,72,0.18)');
+  grad.addColorStop(1, 'rgba(247,201,72,0)');
+  ctx.beginPath();
+  pts.forEach((v, i) => i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)));
+  ctx.lineTo(toX(pts.length - 1), H - P.b);
+  ctx.lineTo(P.l, H - P.b);
+  ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#f7c948'; ctx.lineWidth = 1.5; ctx.lineJoin = 'round';
+  pts.forEach((v, i) => i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)));
+  ctx.stroke();
+}
+
+// ── Main chart ─────────────────────────────────────────────────────────
+function drawMainChart() {
+  const canvas = document.getElementById('main-chart');
+  if (!canvas || !chartData) return;
+  const dpr  = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width) return;
+
+  if (canvas._lW !== rect.width || canvas._lH !== rect.height) {
+    canvas.width  = rect.width  * dpr;
+    canvas.height = rect.height * dpr;
+    canvas._lW = rect.width; canvas._lH = rect.height;
+  }
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = rect.width, H = rect.height;
+  const PAD = { top: 44, right: 24, bottom: 52, left: 76 };
+  const CW = W - PAD.left - PAD.right, CH = H - PAD.top - PAD.bottom;
+  const { actual, predicted, upper, lower, dates, splitIdx } = chartData;
+  const vs = viewStart, ve = viewEnd;
+
+  const slice = [...actual.slice(vs, ve), ...predicted.slice(vs, ve)].filter(v => v != null);
+  const minV = Math.min(...slice) - 10, maxV = Math.max(...slice) + 10;
+  const range = maxV - minV;
+  const toX = i => PAD.left + ((i - vs) / (ve - vs - 1)) * CW;
+  const toY = v => PAD.top + CH - ((v - minV) / range) * CH;
+
+  // Background
+  ctx.fillStyle = '#0c0a08'; ctx.fillRect(0, 0, W, H);
+
+  // H-grid + Y labels
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+  for (let g = 0; g <= 5; g++) {
+    const y = PAD.top + (g / 5) * CH;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + CW, y); ctx.stroke();
+    const val = maxV - (g / 5) * range;
+    ctx.fillStyle = '#454540';
+    ctx.font = "11px 'IBM Plex Mono',monospace";
+    ctx.textAlign = 'right';
+    ctx.fillText(val.toFixed(0) + 'k', PAD.left - 8, y + 4);
+  }
+
+  // V-grid + X labels
+  const totalRange = ve - vs;
+  const step = totalRange > 50 ? 14 : totalRange > 20 ? 7 : 3;
+  for (let i = vs; i < ve; i += step) {
+    const x = toX(i);
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + CH); ctx.stroke();
+    const d = dates[i];
+    if (d) {
+      ctx.fillStyle = '#454540';
+      ctx.font = "11px 'IBM Plex Mono',monospace";
+      ctx.textAlign = 'center';
+      ctx.fillText(`${d.getMonth()+1}/${d.getDate()}`, x, PAD.top + CH + 22);
+    }
+  }
+
+  // Train/Forecast divider
+  if (splitIdx >= vs && splitIdx < ve) {
+    const sx = toX(splitIdx);
+    ctx.strokeStyle = 'rgba(255,51,102,0.45)';
+    ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(sx, PAD.top); ctx.lineTo(sx, PAD.top + CH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,51,102,0.55)';
+    ctx.font = "10px 'IBM Plex Mono',monospace"; ctx.textAlign = 'right';
+    ctx.fillText('TRAIN', sx - 6, PAD.top + 14);
+    ctx.textAlign = 'left';
+    ctx.fillText('FORECAST', sx + 6, PAD.top + 14);
+  }
+
+  // Confidence band
+  const bandPts = [];
+  for (let i = vs; i < ve; i++) {
+    if (upper[i] != null) bandPts.push(i);
+  }
+  if (bandPts.length > 1) {
+    ctx.beginPath();
+    ctx.moveTo(toX(bandPts[0]), toY(upper[bandPts[0]]));
+    bandPts.forEach(i => ctx.lineTo(toX(i), toY(upper[i])));
+    for (let k = bandPts.length - 1; k >= 0; k--) ctx.lineTo(toX(bandPts[k]), toY(lower[bandPts[k]]));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(247,201,72,0.07)'; ctx.fill();
+  }
+
+  // Actual line
+  ctx.beginPath(); ctx.strokeStyle = '#ff6b35'; ctx.lineWidth = 1.5; ctx.lineJoin = 'round';
+  for (let i = vs; i < Math.min(splitIdx, ve); i++) {
+    i === vs ? ctx.moveTo(toX(i), toY(actual[i])) : ctx.lineTo(toX(i), toY(actual[i]));
+  }
+  ctx.stroke();
+
+  // Forecast line (dashed gold)
+  if (splitIdx < ve) {
+    ctx.beginPath(); ctx.strokeStyle = '#f7c948'; ctx.lineWidth = 2;
+    ctx.setLineDash([7, 3]); ctx.lineJoin = 'round';
+    for (let i = Math.max(vs, splitIdx); i < ve; i++) {
+      i === Math.max(vs, splitIdx) ? ctx.moveTo(toX(i), toY(predicted[i])) : ctx.lineTo(toX(i), toY(predicted[i]));
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // Y-axis label
+  ctx.save();
+  ctx.translate(16, PAD.top + CH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#454540';
+  ctx.font = "11px 'IBM Plex Mono',monospace";
+  ctx.textAlign = 'center';
+  ctx.fillText('SALES (k units)', 0, 0);
+  ctx.restore();
+
+  // Hover crosshair + dots
+  if (hoverIdx !== null && hoverIdx >= vs && hoverIdx < ve) {
+    const hx = toX(hoverIdx);
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(hx, PAD.top); ctx.lineTo(hx, PAD.top + CH); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Actual dot
+    if (hoverIdx < splitIdx) {
+      ctx.beginPath(); ctx.arc(hx, toY(actual[hoverIdx]), 5, 0, Math.PI*2);
+      ctx.fillStyle = '#ff6b35'; ctx.fill();
+    }
+    // Forecast dot
+    if (hoverIdx >= splitIdx) {
+      ctx.beginPath(); ctx.arc(hx, toY(predicted[hoverIdx]), 5, 0, Math.PI*2);
+      ctx.fillStyle = '#f7c948'; ctx.fill();
+    }
+  }
+}
+
+// ── Tooltip logic ──────────────────────────────────────────────────────
+document.getElementById('main-chart').addEventListener('mousemove', function(e) {
+  const canvas = this;
+  const rect   = canvas.getBoundingClientRect();
+  const PAD    = { left: 76, right: 24, top: 44, bottom: 52 };
+  const CW     = rect.width - PAD.left - PAD.right;
+  const mx     = e.clientX - rect.left - PAD.left;
+  const vs = viewStart, ve = viewEnd;
+
+  const idx = Math.round(vs + (mx / CW) * (ve - vs - 1));
+  if (idx < vs || idx >= ve) { hoverIdx = null; drawMainChart(); document.getElementById('chart-tooltip').style.opacity=0; return; }
+
+  hoverIdx = idx; drawMainChart();
+
+  const { actual, predicted, dates, splitIdx } = chartData;
+  const d = dates[idx];
+  const isForecast = idx >= splitIdx;
+
+  document.getElementById('tt-date').textContent = d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : '';
+  document.getElementById('tt-actual').textContent = actual[idx].toFixed(1) + 'k';
+
+  const predRow  = document.getElementById('tt-pred-row');
+  const errRow   = document.getElementById('tt-error-row');
+  if (isForecast) {
+    document.getElementById('tt-pred').textContent = predicted[idx].toFixed(1) + 'k';
+    const err = Math.abs(predicted[idx] - actual[idx]);
+    document.getElementById('tt-error').textContent = (err >= 0 ? '+' : '') + err.toFixed(1) + 'k';
+    predRow.style.display = 'flex'; errRow.style.display = 'flex';
+  } else {
+    predRow.style.display = 'none'; errRow.style.display = 'none';
+  }
+
+  const tip = document.getElementById('chart-tooltip');
+  const canvasRect = canvas.getBoundingClientRect();
+  let left = e.clientX - canvasRect.left + 16;
+  if (left + 220 > canvasRect.width) left = e.clientX - canvasRect.left - 220;
+  tip.style.left  = left + 'px';
+  tip.style.top   = (e.clientY - canvasRect.top - 40) + 'px';
+  tip.style.opacity = 1;
+});
+
+document.getElementById('main-chart').addEventListener('mouseleave', function() {
+  hoverIdx = null;
+  document.getElementById('chart-tooltip').style.opacity = 0;
+  drawMainChart();
+});
+
+// ── Copy button ────────────────────────────────────────────────────────
+document.getElementById('copy-btn').addEventListener('click', function() {
+  const cmds = 'python3 02_feature_engineering.py\npython3 17_recursive_forecast.py\npython3 18_zero_sales_postprocess.py';
+  navigator.clipboard.writeText(cmds).then(() => {
+    this.textContent = 'Copied!';
+    this.style.color = '#ff6b35';
+    setTimeout(() => { this.textContent = 'Copy Commands'; this.style.color = ''; }, 2000);
+  });
+});
+
+// ── Init + resize ──────────────────────────────────────────────────────
+function initAll() {
+  drawHeroCanvas();
+  drawDatasetCanvas();
+  drawMainChart();
+}
+
+window.addEventListener('resize', initAll);
+window.addEventListener('load', initAll);
+// Also init immediately after DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAll);
+} else {
+  setTimeout(initAll, 0);
+}
+</script>
 
 </body>
 </html>
