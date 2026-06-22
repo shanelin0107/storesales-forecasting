@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Store Sales Forecasting | Time Series Kaggle Competition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --green-900: #1b4332;
+      --green-800: #2d6a4f;
+      --green-700: #40916c;
+      --green-500: #52b788;
+      --green-300: #95d5b2;
+      --green-100: #d8f3dc;
+      --green-50:  #f0fdf4;
+      --amber:     #f4a261;
+      --amber-dk:  #e76f51;
+      --n900: #111827;
+      --n800: #1f2937;
+      --n700: #374151;
+      --n600: #4b5563;
+      --n400: #9ca3af;
+      --n200: #e5e7eb;
+      --n100: #f3f4f6;
+      --white: #ffffff;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--n100);
+      color: var(--n800);
+      line-height: 1.65;
+    }
+
+    /* ── Sticky nav ── */
+    nav {
+      background: var(--green-900);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    }
+    .nav-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      overflow-x: auto;
+      scrollbar-width: none;
+      gap: 4px;
+    }
+    .nav-inner::-webkit-scrollbar { display: none; }
+    nav a {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 0.83rem;
+      font-weight: 500;
+      padding: 15px 12px;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    nav a:hover { color: #fff; border-bottom-color: var(--green-300); }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(140deg, var(--green-900) 0%, var(--green-800) 55%, var(--green-700) 100%);
+      color: #fff;
+      padding: 90px 20px 70px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Shelf grid overlay — store-sales theme */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg,   transparent, transparent 59px, rgba(255,255,255,0.04) 59px, rgba(255,255,255,0.04) 60px),
+        repeating-linear-gradient(90deg,  transparent, transparent 99px, rgba(255,255,255,0.025) 99px, rgba(255,255,255,0.025) 100px);
+      pointer-events: none;
+    }
+    /* Radial glow */
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 700px; height: 700px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+      top: -250px; right: -200px;
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -.025em;
+      margin-bottom: 18px;
+    }
+    .hero h1 span { color: var(--green-300); }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.75);
+      max-width: 600px;
+      margin: 0 auto 36px;
+    }
+
+    .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 24px;
+      border-radius: 8px;
+      font-weight: 600; font-size: 0.88rem;
+      text-decoration: none;
+      transition: all .18s;
+    }
+    .btn-amber  { background: var(--amber); color: #fff; }
+    .btn-amber:hover { background: var(--amber-dk); transform: translateY(-1px); }
+    .btn-ghost  { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.35); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+    /* KPI cards */
+    .kpi-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+    .kpi {
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      padding: 22px 32px;
+      text-align: center;
+      min-width: 130px;
+    }
+    .kpi-val  { font-size: 2rem; font-weight: 700; color: var(--green-300); }
+    .kpi-lbl  { font-size: 0.72rem; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: .09em; margin-top: 4px; }
+
+    /* ── Shared layout ── */
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+
+    section { padding: 72px 0; }
+    .alt-bg  { background: var(--white); }
+
+    .sec-label {
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--green-700); margin-bottom: 8px;
+    }
+    h2 {
+      font-size: clamp(1.6rem, 3vw, 2.1rem);
+      font-weight: 700; color: var(--n900);
+      letter-spacing: -.015em; margin-bottom: 16px;
+    }
+    h3 { font-size: 1.1rem; font-weight: 600; color: var(--n800); margin-bottom: 10px; }
+    p  { color: var(--n700); margin-bottom: 16px; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Score table ── */
+    .score-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 28px 0; }
+    .score-table thead th {
+      background: var(--green-900); color: #fff;
+      padding: 13px 16px; text-align: left;
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .score-table td { padding: 12px 16px; border-bottom: 1px solid var(--n200); }
+    .score-table tr:hover td { background: var(--green-50); }
+    .score-table tr.best td { background: var(--green-50); font-weight: 600; }
+    .pill {
+      display: inline-block; padding: 2px 10px;
+      border-radius: 12px; font-size: 0.85rem; font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .pill-best   { background: var(--green-100); color: var(--green-800); }
+    .pill-normal { color: var(--n500, #6b7280); }
+
+    /* ── Charts ── */
+    .chart-wrap {
+      margin: 28px 0;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      border: 1px solid var(--n200);
+    }
+    .chart-wrap img { width: 100%; height: auto; display: block; }
+    .chart-cap {
+      background: var(--n100);
+      padding: 11px 16px;
+      font-size: 0.78rem; color: var(--n600);
+      border-top: 1px solid var(--n200);
+    }
+
+    /* ── Cards ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 18px; margin: 24px 0; }
+    .card {
+      background: var(--white); border: 1px solid var(--n200);
+      border-radius: 12px; padding: 22px 22px 22px 18px;
+      border-left: 4px solid var(--green-500);
+    }
+    .card-tag { font-size: 0.72rem; font-weight: 700; color: var(--green-700); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+    .card h3 { margin-bottom: 8px; }
+    .card p { font-size: 0.9rem; margin-bottom: 0; }
+
+    /* ── Diagram ── */
+    .diagram {
+      background: var(--n900);
+      border-radius: 10px; padding: 22px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.83rem; line-height: 1.9;
+      color: #e2e8f0; margin: 16px 0;
+    }
+    .diagram .day   { color: #93c5fd; }
+    .diagram .arr   { color: var(--green-300); }
+    .diagram .lag   { color: #fbbf24; }
+
+    /* ── Improvement banner ── */
+    .imp-banner {
+      background: linear-gradient(135deg, var(--green-900), var(--green-700));
+      color: #fff; border-radius: 14px;
+      padding: 28px 32px;
+      display: flex; align-items: center; gap: 24px;
+      margin: 32px 0; flex-wrap: wrap;
+    }
+    .imp-stat { font-size: 2.6rem; font-weight: 700; color: var(--green-300); white-space: nowrap; }
+    .imp-body strong { font-size: 1.05rem; }
+    .imp-body p { color: rgba(255,255,255,0.72); margin-top: 4px; font-size: 0.9rem; }
+
+    /* ── Findings list ── */
+    .findings { list-style: none; }
+    .finding  { display: flex; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--n200); }
+    .finding:last-child { border-bottom: none; }
+    .finding-num {
+      flex-shrink: 0; width: 32px; height: 32px;
+      background: var(--green-800); color: #fff;
+      border-radius: 8px; display: flex;
+      align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem; margin-top: 2px;
+    }
+    .finding-body h3 { margin-bottom: 6px; }
+    .finding-body p  { font-size: 0.93rem; }
+    .insight-box {
+      background: var(--green-50);
+      border-left: 3px solid var(--green-500);
+      padding: 10px 14px; border-radius: 0 8px 8px 0;
+      margin-top: 10px; font-size: 0.88rem;
+      color: var(--green-800);
+    }
+
+    /* ── Deploy table ── */
+    .dep-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 24px 0; }
+    .dep-table td { padding: 14px 16px; border-bottom: 1px solid var(--n200); vertical-align: top; }
+    .dep-table td:first-child { font-weight: 600; color: var(--green-800); width: 32%; white-space: nowrap; }
+    .dep-table tr:hover td { background: var(--green-50); }
+
+    /* ── Code ── */
+    pre {
+      background: var(--n900); color: #e2e8f0;
+      padding: 22px 24px; border-radius: 10px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.83rem; line-height: 1.75;
+      margin: 16px 0;
+    }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84em;
+      background: var(--n100); padding: 2px 6px;
+      border-radius: 4px; color: var(--green-800);
+    }
+    pre code { background: none; padding: 0; color: inherit; font-size: 1em; }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--green-900);
+      color: rgba(255,255,255,0.55);
+      text-align: center;
+      padding: 36px 20px;
+      font-size: 0.83rem;
+    }
+    footer a { color: var(--green-300); text-decoration: none; }
+    footer p + p { margin-top: 6px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .kpi-row { gap: 12px; }
+      .kpi { padding: 16px 20px; }
+      .kpi-val { font-size: 1.6rem; }
+      .imp-banner { flex-direction: column; }
+      .score-table th, .score-table td { padding: 10px 10px; font-size: 0.82rem; }
+      .dep-table td:first-child { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <div class="nav-inner">
+    <a href="#results">Results</a>
+    <a href="#data">Data</a>
+    <a href="#methodology">Methodology</a>
+    <a href="#findings">Findings</a>
+    <a href="#deployment">Deployment</a>
+    <a href="#repo">Repo</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="badge">Kaggle &mdash; Time Series Forecasting</div>
+    <h1>Store Sales<br><span>Forecasting</span></h1>
+    <p class="hero-sub">
+      Predicting daily sales for 54 stores &times; 33 product families across Ecuador&rsquo;s
+      largest grocery chain &mdash; 1,782 concurrent time series over a 16-day horizon.
+    </p>
+    <div class="hero-btns">
+      <a href="https://www.kaggle.com/competitions/store-sales-time-series-forecasting"
+         class="btn btn-amber" target="_blank" rel="noopener">View Competition ↗</a>
+      <a href="https://github.com/YOUR_USERNAME/YOUR_REPO"
+         class="btn btn-ghost"  target="_blank" rel="noopener">GitHub Repo ↗</a>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-val">0.38465</div>
+        <div class="kpi-lbl">Best RMSLE (LB)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val">↓ 11%</div>
+        <div class="kpi-lbl">vs. Baseline</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val">1,782</div>
+        <div class="kpi-lbl">Time Series</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val">33</div>
+        <div class="kpi-lbl">LightGBM Models</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Results ── -->
+<section id="results">
+  <div class="container">
+    <div class="sec-label">Leaderboard</div>
+    <h2>Model Progression</h2>
+    <p>
+      Starting from a global LightGBM baseline, each architectural iteration delivered measurable
+      improvement. The biggest single gain came from switching to <strong>recursive one-day-ahead
+      forecasting</strong>, which unlocked <code>lag_7</code> — the strongest short-term signal
+      in the autocorrelation structure.
+    </p>
+
+    <table class="score-table">
+      <thead>
+        <tr>
+          <th>Version</th>
+          <th>Architecture</th>
+          <th>Key Change</th>
+          <th>LB Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>v3</td>
+          <td>Global LightGBM</td>
+          <td>Baseline with full feature engineering</td>
+          <td><span class="pill pill-normal">0.430</span></td>
+        </tr>
+        <tr>
+          <td>v11</td>
+          <td>Per-Family (33 models)</td>
+          <td>Independent model per product category</td>
+          <td><span class="pill pill-normal">0.42084</span></td>
+        </tr>
+        <tr>
+          <td>v12</td>
+          <td>Per-Family + Dense Lags</td>
+          <td>Consecutive lags lag_16~63</td>
+          <td><span class="pill pill-normal">0.41781</span></td>
+        </tr>
+        <tr>
+          <td>v14</td>
+          <td>Per-Family + Recursive</td>
+          <td>Recursive forecasting with lag_1~63</td>
+          <td><span class="pill pill-normal">0.397</span></td>
+        </tr>
+        <tr class="best">
+          <td>v15 ★</td>
+          <td>Per-Family + Recursive + Zero-Sales</td>
+          <td>Post-processing for discontinued series</td>
+          <td><span class="pill pill-best">0.38465</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="chart-wrap">
+      <img src="images/01_score_progression.png" alt="Score Progression Chart">
+      <div class="chart-cap">Fig 1 &mdash; LB score progression across model versions (lower is better).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Data Overview ── -->
+<section id="data" class="alt-bg">
+  <div class="container">
+    <div class="sec-label">Dataset</div>
+    <h2>Data Overview</h2>
+    <p>
+      The dataset covers <strong>Corporación Favorita</strong>, Ecuador&rsquo;s largest grocery
+      chain. Training data spans Feb 2013 to Aug 15 2017 (~3 million rows); the forecast target
+      is Aug 16–31 2017 (28,513 rows across 1,782 store&ndash;family pairs).
+    </p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-tag">Scale</div>
+        <h3>54 Stores &times; 33 Families</h3>
+        <p>1,782 concurrent time series. Stores span 22 cities across Ecuador. Families range from PRODUCE and BEVERAGES to BOOKS and BABY CARE.</p>
+      </div>
+      <div class="card">
+        <div class="card-tag">Auxiliary Data</div>
+        <h3>Rich External Context</h3>
+        <p>Oil prices (Ecuador is oil-dependent), national/regional/local holidays, daily transaction counts, promotion calendars, and store metadata.</p>
+      </div>
+      <div class="card">
+        <div class="card-tag">Challenge</div>
+        <h3>Structural Break</h3>
+        <p>The April 2016 earthquake caused a ~3-week disruption to purchasing behavior — handled via an explicit dummy variable to prevent contaminating lag features.</p>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <img src="images/06_sales_trend.png" alt="Historical Sales Trend">
+      <div class="chart-cap">
+        Fig 2 &mdash; Total daily sales across all stores (Feb 2013 – Aug 2017).
+        The April 2016 earthquake dip is visible mid-series. The overall trend is gradual growth with strong weekly and annual seasonality.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Methodology ── -->
+<section id="methodology">
+  <div class="container">
+    <div class="sec-label">Approach</div>
+    <h2>Methodology</h2>
+
+    <!-- 1. Feature Engineering -->
+    <h3>1 &mdash; Feature Engineering</h3>
+    <p>
+      40+ features across six categories, computed once and stored as a Parquet feature store
+      (<code>outputs/train_fe.parquet</code>), reused across all model iterations.
+    </p>
+    <div class="card-grid" style="margin-bottom: 36px;">
+      <div class="card">
+        <div class="card-tag">Temporal</div>
+        <h3>Lag &amp; Rolling Features</h3>
+        <p>Sales lags (lag_1–63, lag_364/371/728), 7/14/28-day rolling mean and standard deviation.</p>
+      </div>
+      <div class="card">
+        <div class="card-tag">Calendar</div>
+        <h3>Date &amp; Holiday Features</h3>
+        <p>Day of week, month, week of year, is_weekend, is_month_start (paycheck effect +12–18%), days_to/after_holiday matched by store geography.</p>
+      </div>
+      <div class="card">
+        <div class="card-tag">External</div>
+        <h3>Oil &amp; Promotions</h3>
+        <p>Daily oil price + 7/28-day moving average. Forward-looking <code>onpromotion</code> flag (available for test set) plus lagged promotion history.</p>
+      </div>
+    </div>
+
+    <!-- 2. Per-Family -->
+    <h3>2 &mdash; Per-Family Architecture</h3>
+    <p>
+      Replaced a single global model with <strong>33 independent LightGBM models</strong> —
+      one per product family. Each model is trained, validated, and predicts entirely within its
+      own product category.
+    </p>
+    <div class="chart-wrap">
+      <img src="images/04_sales_by_family.png" alt="Sales by Product Family">
+      <div class="chart-cap">
+        Fig 3 &mdash; Sales distributions by product family. PRODUCE, BEVERAGES, and MEATS have fundamentally different scales, variance, and skew.
+        A global model cannot serve all simultaneously; per-family models each learn their own patterns.
+      </div>
+    </div>
+    <p>
+      <strong>Dense consecutive lags (lag_16~63):</strong> Providing all 48 consecutive lag days
+      lets each tree model implicitly learn any moving-average pattern — trends, momentum,
+      mean reversion — without manual feature engineering.
+    </p>
+
+    <!-- 3. Recursive Forecasting -->
+    <h3 style="margin-top: 36px;">3 &mdash; Recursive Forecasting</h3>
+    <p>
+      Direct forecasting requires a minimum lag of 16 days, losing <code>lag_7</code>.
+      Recursive forecasting predicts <em>one day at a time</em>, using each prediction
+      as a lag for the next step:
+    </p>
+    <div class="diagram">
+      <span class="day">Aug 16</span> <span class="arr">→ predict →</span> stored in buffer<br>
+      <span class="day">Aug 17</span> <span class="arr">→ predict using</span> <span class="lag">lag_1 = Aug 16 prediction</span><br>
+      <span class="day">Aug 18</span> <span class="arr">→ predict using</span> <span class="lag">lag_1 = Aug 17, lag_2 = Aug 16</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⋮<br>
+      <span class="day">Aug 31</span> <span class="arr">→ predict using</span> <span class="lag">lag_1 … lag_15 all from buffer</span>
+    </div>
+
+    <div class="chart-wrap">
+      <img src="images/03_autocorrelation.png" alt="Autocorrelation Function">
+      <div class="chart-cap">
+        Fig 4 &mdash; Autocorrelation function. Sharp spikes at lag 7, 14, 21, 28 confirm strong weekly consumer behavior cycles.
+        Making lag_7 available via recursive forecasting was the single largest improvement (0.41781 → 0.397).
+      </div>
+    </div>
+
+    <div class="imp-banner">
+      <div class="imp-stat">−5.4%</div>
+      <div class="imp-body">
+        <strong>Recursive forecasting: the single largest jump</strong>
+        <p>Unlocking lag_7 dropped LB from 0.41781 to 0.397 — bigger than any feature engineering change combined.</p>
+      </div>
+    </div>
+
+    <!-- 4. Zero-Sales Post-Processing -->
+    <h3>4 &mdash; Zero-Sales Post-Processing</h3>
+    <p>
+      If a store–family combination had <strong>zero sales for the past 3–7 consecutive days</strong>,
+      force predictions to 0. No retraining required — applied as a final filter on the submission file.
+    </p>
+    <div class="chart-wrap">
+      <img src="images/05_zero_sales_heatmap.png" alt="Zero-Sales Heatmap">
+      <div class="chart-cap">
+        Fig 5 &mdash; Zero-sales rate by store and product family. BOOKS, BABY CARE, and MAGAZINES have high zero-sale rates.
+        Models always output small positive numbers; zeroing them out corrects a systematic positive bias.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Key Findings ── -->
+<section id="findings" class="alt-bg">
+  <div class="container">
+    <div class="sec-label">Insights</div>
+    <h2>Key Findings</h2>
+
+    <div class="chart-wrap">
+      <img src="images/02_weekly_seasonality.png" alt="Weekly Seasonality">
+      <div class="chart-cap">
+        Fig 6 &mdash; Average sales by day of week. Weekends and Fridays consistently peak; Tuesdays are lowest.
+        This weekly rhythm is the dominant short-term demand signal.
+      </div>
+    </div>
+
+    <ul class="findings">
+      <li class="finding">
+        <div class="finding-num">1</div>
+        <div class="finding-body">
+          <h3>Weekly cycles dominate short-term demand</h3>
+          <p>Sales peak on weekends and Fridays, trough on Tuesdays. <code>lag_7</code> was the top-ranked feature in every per-family model.</p>
+          <div class="insight-box">In production: ensure your data pipeline delivers T-1 day sales with &lt;24 h latency so short-lag features are always available for daily retraining.</div>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-num">2</div>
+        <div class="finding-body">
+          <h3>Product category matters more than store location</h3>
+          <p>Splitting by product family gave larger gains than any store-level segmentation. Demand patterns are shaped more by <em>what</em> is sold than <em>where</em>.</p>
+          <div class="insight-box">Build category-level forecasting pipelines rather than one-size-fits-all models.</div>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-num">3</div>
+        <div class="finding-body">
+          <h3>Zero-sales detection is an inventory signal</h3>
+          <p>127 store–family combinations had 7+ consecutive zero-sale days — representing discontinued SKUs, stockouts, or seasonal gaps.</p>
+          <div class="insight-box">Auto-flag these for store manager review: stockout → trigger replenishment; discontinued → cancel pending purchase orders.</div>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-num">4</div>
+        <div class="finding-body">
+          <h3>Year-ago signals are useful but fragile</h3>
+          <p>lag_364/371 captures annual seasonality. Restricting training to 2015+ data (fresher) <em>hurt</em> performance — reducing sample size outweighed the freshness benefit.</p>
+          <div class="insight-box">Use full historical data with year-ago lag features rather than truncating the training window.</div>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-num">5</div>
+        <div class="finding-body">
+          <h3>Macroeconomic context belongs in retail models</h3>
+          <p>Oil price was a consistently non-trivial feature. Ecuador&rsquo;s government revenue is oil-dependent, affecting public-employee wages — a large consumer segment — with a 1–3 month lag.</p>
+          <div class="insight-box">For international deployment: identify the local macro indicator most correlated with consumer spending (fuel price, unemployment rate, consumer confidence index).</div>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-num">6</div>
+        <div class="finding-body">
+          <h3>Holiday effects require geographic precision</h3>
+          <p>National holidays lift all stores uniformly. Regional and local holidays affect only stores in the matching state/city. Mismatching features introduces noise.</p>
+          <div class="insight-box">Maintain a store–geography mapping and apply holiday features at the correct granularity.</div>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-num">7</div>
+        <div class="finding-body">
+          <h3>Structural breaks need explicit handling</h3>
+          <p>The April 2016 earthquake caused a ~3-week disruption to purchasing patterns. Without a dummy variable, the model learns incorrect lag patterns from that period.</p>
+          <div class="insight-box">Maintain a &ldquo;disruption calendar&rdquo; for known structural breaks (natural disasters, strikes, pandemic periods) and add indicator variables.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ── Deployment ── -->
+<section id="deployment">
+  <div class="container">
+    <div class="sec-label">Production</div>
+    <h2>Real-World Deployment Recommendations</h2>
+    <p>Insights from competition modeling that translate directly to production grocery forecasting systems:</p>
+
+    <table class="dep-table">
+      <tbody>
+        <tr>
+          <td>Data Latency</td>
+          <td>Daily sales data with &lt;24 h lag required to use lag_1~7 features. Late data = degraded short-term accuracy.</td>
+        </tr>
+        <tr>
+          <td>Retraining Cadence</td>
+          <td>Weekly retraining recommended; monthly is the minimum given strong weekly cycles.</td>
+        </tr>
+        <tr>
+          <td>Inventory</td>
+          <td>Auto-flag store–SKU pairs with 7+ consecutive zero-sales days for manager review: stockout vs. discontinued.</td>
+        </tr>
+        <tr>
+          <td>Promotions</td>
+          <td>Forward-looking <code>onpromotion</code> calendar (known in advance) is high-value. Maintain it rigorously as a first-class input.</td>
+        </tr>
+        <tr>
+          <td>Model Granularity</td>
+          <td>Per-category models. Consider per-store-type models if fewer than ~10 stores per type.</td>
+        </tr>
+        <tr>
+          <td>Forecast Horizon</td>
+          <td>Confidence degrades after day 7 in recursive mode. Widen safety stock buffers for day 14+ forecasts.</td>
+        </tr>
+        <tr>
+          <td>Macro Features</td>
+          <td>Include the local macro indicator most correlated with consumer purchasing power (oil, wages, consumer confidence).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Repository ── -->
+<section id="repo" class="alt-bg">
+  <div class="container">
+    <div class="sec-label">Codebase</div>
+    <h2>Repository Structure</h2>
+    <p>The pipeline is organized as numbered scripts — run them in order to reproduce the final submission.</p>
+
+    <pre><code>├── 01_eda.py                      # Exploratory data analysis (11 plots)
+├── 02_feature_engineering.py      # Feature pipeline → outputs/train_fe.parquet
+├── 08_model_v3.py                 # Global LightGBM baseline (LB 0.430)
+├── 14_per_family.py               # Per-family architecture (LB 0.42084)
+├── 15_per_family_dense_lags.py    # + Dense lags lag_16~63  (LB 0.41781)
+├── 17_recursive_forecast.py       # + Recursive forecasting (LB 0.397)
+├── 18_zero_sales_postprocess.py   # Zero-sales post-processing (LB 0.38465)
+├── 19_zero_window_search.py       # Grid-search optimal zero-sales window
+├── 20_visualizations.py           # Generate all charts
+├── images/                        # 6 publication-quality charts
+├── outputs/                       # Feature stores (Parquet), EDA plots
+└── submission_v15.csv             # Final submission (best score)</code></pre>
+
+    <h3 style="margin-top: 32px;">Reproduce Results</h3>
+    <pre><code># 1. Place Kaggle data files in project root
+#    train.csv  test.csv  transactions.csv  sample_submission.csv
+
+# 2. Build feature store
+python3 02_feature_engineering.py
+
+# 3. Train per-family models and generate predictions
+python3 17_recursive_forecast.py
+
+# 4. Apply zero-sales post-processing
+python3 18_zero_sales_postprocess.py
+# → submission_v15.csv  (LB 0.38465)</code></pre>
+
+    <h3 style="margin-top: 24px;">Dependencies</h3>
+    <pre><code>pandas  numpy  lightgbm  scikit-learn  pyarrow  matplotlib  seaborn</code></pre>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <p>
+    <a href="https://www.kaggle.com/competitions/store-sales-time-series-forecasting"
+       target="_blank" rel="noopener">Kaggle &mdash; Store Sales Time Series Forecasting</a>
+    &nbsp;&middot;&nbsp;
+    <a href="https://github.com/YOUR_USERNAME/YOUR_REPO"
+       target="_blank" rel="noopener">GitHub Repository</a>
+  </p>
+  <p style="margin-top:8px; opacity:.4;">Corporación Favorita &nbsp;&middot;&nbsp; Ecuador &nbsp;&middot;&nbsp; 54 Stores &nbsp;&middot;&nbsp; 33 Product Families</p>
+</footer>
+
+</body>
+</html>
